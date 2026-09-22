@@ -2,6 +2,7 @@ import { router, Slot, usePathname } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AppBannerAd } from '@/components/banner-ad';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -28,6 +29,7 @@ export default function AppTabs() {
   return (
     <View style={styles.container}>
       <Slot />
+      <AppBannerAd />
       <View style={styles.navWrap}>
         <View style={styles.navBar}>
           {visibleItems.map((item) => (
