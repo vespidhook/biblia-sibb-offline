@@ -27,13 +27,20 @@ export function AdsConsentProvider({ children }: PropsWithChildren) {
 
     let cancelled = false;
 
-    // Lazy require so web/SSR builds never touch the native-only module.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const googleMobileAds = require('react-native-google-mobile-ads');
-    const { AdsConsent, AdsConsentPrivacyOptionsRequirementStatus, default: MobileAds } =
-      googleMobileAds;
-
     (async () => {
+      // Lazy require so web/SSR builds never touch the native-only module. It also throws
+      // when the native binary lacks it (Expo Go), in which case ads simply stay off.
+      let googleMobileAds;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        googleMobileAds = require('react-native-google-mobile-ads');
+      } catch {
+        if (!cancelled) setLoading(false);
+        return;
+      }
+      const { AdsConsent, AdsConsentPrivacyOptionsRequirementStatus, default: MobileAds } =
+        googleMobileAds;
+
       try {
         await AdsConsent.gatherConsent();
       } catch (error) {
