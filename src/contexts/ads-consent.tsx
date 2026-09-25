@@ -1,5 +1,5 @@
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Platform } from 'react-native';
+import { Platform, TurboModuleRegistry } from 'react-native';
 
 type AdsConsentContextValue = {
   /** True while the GDPR consent flow (UMP) is being gathered on startup. */
@@ -13,6 +13,10 @@ type AdsConsentContextValue = {
 };
 
 const AdsConsentContext = createContext<AdsConsentContextValue | null>(null);
+
+// Requiring the library throws when its native module is missing (Expo Go), and Metro
+// then returns undefined on later requires, so the module must be probed beforehand.
+const hasAdMobNativeModule = () => TurboModuleRegistry.get('RNGoogleMobileAdsModule') != null;
 
 // AdMob (react-native-google-mobile-ads) has no web support, and native modules
 // aren't available in the Expo Go / web bundle, so consent is only gathered on
@@ -28,16 +32,14 @@ export function AdsConsentProvider({ children }: PropsWithChildren) {
     let cancelled = false;
 
     (async () => {
-      // Lazy require so web/SSR builds never touch the native-only module. It also throws
-      // when the native binary lacks it (Expo Go), in which case ads simply stay off.
-      let googleMobileAds;
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        googleMobileAds = require('react-native-google-mobile-ads');
-      } catch {
+      if (!hasAdMobNativeModule()) {
         if (!cancelled) setLoading(false);
         return;
       }
+
+      // Lazy require so web/SSR builds never touch the native-only module.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const googleMobileAds = require('react-native-google-mobile-ads');
       const { AdsConsent, AdsConsentPrivacyOptionsRequirementStatus, default: MobileAds } =
         googleMobileAds;
 
@@ -70,7 +72,7 @@ export function AdsConsentProvider({ children }: PropsWithChildren) {
   }, []);
 
   const showPrivacyOptionsForm = useCallback(() => {
-    if (Platform.OS !== 'android') return;
+    if (Platform.OS !== 'android' || !hasAdMobNativeModule()) return;
 
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { AdsConsent } = require('react-native-google-mobile-ads');
