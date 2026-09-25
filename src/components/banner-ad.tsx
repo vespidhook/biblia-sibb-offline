@@ -1,6 +1,7 @@
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
-import { useAdsConsent } from '@/contexts/ads-consent';
+import { Spacing } from '@/constants/theme';
+import { hasAdMobNativeModule, useAdsConsent } from '@/contexts/ads-consent';
 import { useTheme } from '@/hooks/use-theme';
 
 // AdMob (react-native-google-mobile-ads) has no web support, and native modules
@@ -13,9 +14,29 @@ export function AppBannerAd() {
   const theme = useTheme();
   const { canRequestAds } = useAdsConsent();
 
+  if (Platform.OS === 'web' || !AdUnitId) {
+    return null;
+  }
+
+  // Expo Go has no AdMob native module, so show where the banner will sit in the real app.
+  if (__DEV__ && !hasAdMobNativeModule()) {
+    return (
+      <View
+        style={[
+          styles.wrap,
+          styles.placeholder,
+          { borderColor: theme.backgroundSelected, backgroundColor: theme.backgroundElement },
+        ]}>
+        <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
+          Espaço do anúncio (AdMob) — só aparece no app instalado
+        </Text>
+      </View>
+    );
+  }
+
   // canRequestAds only turns true after the GDPR consent flow (UMP) has been
   // gathered — requesting ads before that violates Google's consent policy.
-  if (Platform.OS === 'web' || !AdUnitId || !canRequestAds) {
+  if (!canRequestAds) {
     return null;
   }
 
@@ -40,5 +61,17 @@ const styles = StyleSheet.create({
   wrap: {
     width: '100%',
     alignItems: 'center',
+    marginBottom: Spacing.two,
+  },
+  placeholder: {
+    height: 60,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: 8,
+  },
+  placeholderText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

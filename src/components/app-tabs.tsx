@@ -29,8 +29,8 @@ export default function AppTabs() {
   return (
     <View style={styles.container}>
       <Slot />
-      <AppBannerAd />
       <View style={styles.navWrap}>
+        <AppBannerAd />
         <View style={styles.navBar}>
           {visibleItems.map((item) => (
             <Pressable

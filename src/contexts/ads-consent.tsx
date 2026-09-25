@@ -16,7 +16,7 @@ const AdsConsentContext = createContext<AdsConsentContextValue | null>(null);
 
 // Requiring the library throws when its native module is missing (Expo Go), and Metro
 // then returns undefined on later requires, so the module must be probed beforehand.
-const hasAdMobNativeModule = () => TurboModuleRegistry.get('RNGoogleMobileAdsModule') != null;
+export const hasAdMobNativeModule = () => TurboModuleRegistry.get('RNGoogleMobileAdsModule') != null;
 
 // AdMob (react-native-google-mobile-ads) has no web support, and native modules
 // aren't available in the Expo Go / web bundle, so consent is only gathered on
