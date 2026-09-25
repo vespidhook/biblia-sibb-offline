@@ -14,24 +14,25 @@ export function AppBannerAd() {
   const theme = useTheme();
   const { canRequestAds } = useAdsConsent();
 
-  if (Platform.OS === 'web' || !AdUnitId) {
-    return null;
-  }
-
-  // Expo Go has no AdMob native module, so show where the banner will sit in the real app.
-  if (__DEV__ && !hasAdMobNativeModule()) {
+  // Expo Go and the browser have no AdMob native module, so mark where the banner will sit.
+  if (__DEV__ && (Platform.OS === 'web' || !hasAdMobNativeModule())) {
     return (
       <View
         style={[
           styles.wrap,
           styles.placeholder,
-          { borderColor: theme.backgroundSelected, backgroundColor: theme.backgroundElement },
+          { borderColor: theme.accentLight, backgroundColor: `${theme.accentLight}18` },
         ]}>
+        <Text style={[styles.placeholderTitle, { color: theme.accentLight }]}>PROPAGANDA (AdMob)</Text>
         <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
-          Espaço do anúncio (AdMob) — só aparece no app instalado
+          Quadrado fake: o anúncio real só aparece no app instalado
         </Text>
       </View>
     );
+  }
+
+  if (Platform.OS === 'web' || !AdUnitId) {
+    return null;
   }
 
   // canRequestAds only turns true after the GDPR consent flow (UMP) has been
@@ -64,14 +65,19 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.two,
   },
   placeholder: {
-    height: 60,
+    height: 64,
     justifyContent: 'center',
-    borderWidth: 1,
+    gap: 2,
+    borderWidth: 2,
     borderStyle: 'dashed',
     borderRadius: 8,
   },
+  placeholderTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
   placeholderText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '600',
   },
 });
