@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppBannerAd } from '@/components/banner-ad';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useAdsConsent } from '@/contexts/ads-consent';
 import { useThemePreference } from '@/contexts/theme-preference';
@@ -96,6 +97,9 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+      <View style={styles.bannerWrap}>
+        <AppBannerAd />
+      </View>
     </SafeAreaView>
   );
 }
@@ -117,6 +121,11 @@ function buildStyles(theme: {
     },
     page: {
       flex: 1,
+      backgroundColor: theme.background,
+    },
+    bannerWrap: {
+      paddingHorizontal: Spacing.three,
+      paddingTop: Spacing.two,
       backgroundColor: theme.background,
     },
     pageContent: {
