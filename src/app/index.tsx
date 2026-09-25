@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useAdsConsent } from '@/contexts/ads-consent';
 import { useThemePreference } from '@/contexts/theme-preference';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -40,6 +41,7 @@ const OPTIONS: HomeOption[] = [
 export default function HomeScreen() {
   const theme = useTheme();
   const { mode, toggleMode } = useThemePreference();
+  const { privacyOptionsRequired, showPrivacyOptionsForm } = useAdsConsent();
   const styles = useMemo(() => buildStyles(theme), [theme]);
   const logoSource =
     mode === 'dark'
@@ -67,6 +69,13 @@ export default function HomeScreen() {
               {mode === 'dark' ? 'Usar modo claro' : 'Usar modo escuro'}
             </Text>
           </Pressable>
+
+          {privacyOptionsRequired ? (
+            <Pressable style={styles.themeToggle} onPress={showPrivacyOptionsForm}>
+              <Text style={styles.themeToggleIcon}>🔒</Text>
+              <Text style={styles.themeToggleText}>Gerenciar consentimento de anúncios</Text>
+            </Pressable>
+          ) : null}
 
           <View style={styles.options}>
             {OPTIONS.map((option) => (

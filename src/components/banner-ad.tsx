@@ -1,5 +1,6 @@
 import { Platform, StyleSheet, View } from 'react-native';
 
+import { useAdsConsent } from '@/contexts/ads-consent';
 import { useTheme } from '@/hooks/use-theme';
 
 // AdMob (react-native-google-mobile-ads) has no web support, and native modules
@@ -10,8 +11,11 @@ const AdUnitId =
 
 export function AppBannerAd() {
   const theme = useTheme();
+  const { canRequestAds } = useAdsConsent();
 
-  if (Platform.OS === 'web' || !AdUnitId) {
+  // canRequestAds only turns true after the GDPR consent flow (UMP) has been
+  // gathered — requesting ads before that violates Google's consent policy.
+  if (Platform.OS === 'web' || !AdUnitId || !canRequestAds) {
     return null;
   }
 
