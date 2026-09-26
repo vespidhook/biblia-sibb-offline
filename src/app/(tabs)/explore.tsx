@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppBannerAd } from '@/components/banner-ad';
+import { SHARE_FOOTER } from '@/constants/share';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import hymnsData from '../../assets/jsons/cantor_cristao/cantor_cristao.json';
@@ -63,7 +64,7 @@ export default function HymnalScreen() {
     if (!selectedHymn) return;
     await Share.share({
       title: 'Cantor Cristão',
-      message: `${selectedHymn.id}. ${toTitleCase(selectedHymn.title)}\n\n${selectedHymn.lyrics}\n\nBiblia SIBB`,
+      message: `${selectedHymn.id}. ${toTitleCase(selectedHymn.title)}\n\n${selectedHymn.lyrics}\n\n${SHARE_FOOTER}`,
     });
   };
 

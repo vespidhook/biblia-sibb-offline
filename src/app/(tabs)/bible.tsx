@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SHARE_FOOTER } from '@/constants/share';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import aaBible from '../../assets/jsons/biblia/aa.json';
@@ -217,9 +218,9 @@ export default function BibleScreen() {
 
   const shareSelectedVerses = async () => {
     const sorted = [...selectedVerses].sort((a, b) => a - b);
-    const message = `${selectedBook.name} ${chapterIndex + 1}:${formatVerseRanges(sorted)} (${version.toUpperCase()})\n\n${sorted
+    const message = `${selectedBook.name} ${chapterIndex + 1}:${formatVerseRanges(sorted)}\n\n${sorted
       .map((index) => `${index + 1}. ${selectedChapter[index]}`)
-      .join('\n')}\n\nBiblia SIBB`;
+      .join('\n')}\n\n${SHARE_FOOTER}`;
 
     await Share.share({ message });
   };
