@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppBannerAd } from '@/components/banner-ad';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import hymnsData from '../../assets/jsons/cantor_cristao/cantor_cristao.json';
@@ -158,6 +159,9 @@ export default function HymnalScreen() {
               </ScrollView>
             </View>
           )}
+          <View style={styles.modalBanner}>
+            <AppBannerAd />
+          </View>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -295,6 +299,10 @@ function buildStyles(theme: {
     modalSafeArea: {
       flex: 1,
       backgroundColor: theme.background,
+    },
+    modalBanner: {
+      paddingHorizontal: Spacing.three,
+      paddingTop: Spacing.two,
     },
     modalContent: {
       flex: 1,
