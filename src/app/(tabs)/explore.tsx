@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppBannerAd } from '@/components/banner-ad';
+import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { SHARE_FOOTER } from '@/constants/share';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -49,6 +50,7 @@ export default function HymnalScreen() {
   const [query, setQuery] = useState('');
   const [selectedHymn, setSelectedHymn] = useState<Hymn | null>(null);
   const [fontSize, setFontSize] = useState(17);
+  const [modalBannerHeight, setModalBannerHeight] = useState(0);
 
   const filteredHymns = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -126,42 +128,47 @@ export default function HymnalScreen() {
 
       <Modal visible={selectedHymn !== null} animationType="slide" onRequestClose={() => setSelectedHymn(null)}>
         <SafeAreaView style={styles.modalSafeArea}>
-          {selectedHymn && (
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <View style={styles.modalTitleWrap}>
-                  <Text style={styles.modalNumber}>{selectedHymn.id}</Text>
-                  <Text style={styles.modalTitle} numberOfLines={2}>
-                    {toTitleCase(selectedHymn.title)}
-                  </Text>
+          <View style={styles.modalBody}>
+            {selectedHymn && (
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <View style={styles.modalTitleWrap}>
+                    <Text style={styles.modalNumber}>{selectedHymn.id}</Text>
+                    <Text style={styles.modalTitle} numberOfLines={2}>
+                      {toTitleCase(selectedHymn.title)}
+                    </Text>
+                  </View>
+                  <Pressable style={styles.closeButton} onPress={() => setSelectedHymn(null)}>
+                    <Text style={styles.closeButtonText}>Fechar</Text>
+                  </Pressable>
                 </View>
-                <Pressable style={styles.closeButton} onPress={() => setSelectedHymn(null)}>
-                  <Text style={styles.closeButtonText}>Fechar</Text>
-                </Pressable>
-              </View>
 
-              <View style={styles.controls}>
-                <Pressable style={styles.controlButton} onPress={() => changeFontSize(fontSize - 1)}>
-                  <Text style={styles.controlText}>A-</Text>
-                </Pressable>
-                <Text style={styles.fontSizeText}>{fontSize}</Text>
-                <Pressable style={styles.controlButton} onPress={() => changeFontSize(fontSize + 1)}>
-                  <Text style={styles.controlText}>A+</Text>
-                </Pressable>
-                <Pressable style={styles.shareButton} onPress={shareHymn}>
-                  <Text style={styles.shareButtonText}>Compartilhar</Text>
-                </Pressable>
-              </View>
+                <View style={styles.controls}>
+                  <Pressable style={styles.controlButton} onPress={() => changeFontSize(fontSize - 1)}>
+                    <Text style={styles.controlText}>A-</Text>
+                  </Pressable>
+                  <Text style={styles.fontSizeText}>{fontSize}</Text>
+                  <Pressable style={styles.controlButton} onPress={() => changeFontSize(fontSize + 1)}>
+                    <Text style={styles.controlText}>A+</Text>
+                  </Pressable>
+                  <Pressable style={styles.shareButton} onPress={shareHymn}>
+                    <Text style={styles.shareButtonText}>Compartilhar</Text>
+                  </Pressable>
+                </View>
 
-              <ScrollView style={styles.lyricsScroll} contentContainerStyle={styles.lyricsContent}>
-                <Text style={[styles.lyricsText, { fontSize, lineHeight: fontSize * 1.65 }]}>
-                  {selectedHymn.lyrics.trim()}
-                </Text>
-              </ScrollView>
+                <ScrollView style={styles.lyricsScroll} contentContainerStyle={styles.lyricsContent}>
+                  <Text style={[styles.lyricsText, { fontSize, lineHeight: fontSize * 1.65 }]}>
+                    {selectedHymn.lyrics.trim()}
+                  </Text>
+                </ScrollView>
+              </View>
+            )}
+            <View
+              style={styles.modalBanner}
+              onLayout={(event) => setModalBannerHeight(event.nativeEvent.layout.height)}>
+              <AppBannerAd />
             </View>
-          )}
-          <View style={styles.modalBanner}>
-            <AppBannerAd />
+            <ThemeToggleButton bottom={modalBannerHeight + Spacing.three} />
           </View>
         </SafeAreaView>
       </Modal>
@@ -296,6 +303,9 @@ function buildStyles(theme: {
       color: theme.textSecondary,
       fontSize: 14,
       textAlign: 'center',
+    },
+    modalBody: {
+      flex: 1,
     },
     modalSafeArea: {
       flex: 1,

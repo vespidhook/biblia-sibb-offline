@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Image,
   ImageBackground,
@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppBannerAd } from '@/components/banner-ad';
+import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useAdsConsent } from '@/contexts/ads-consent';
 import { useThemePreference } from '@/contexts/theme-preference';
@@ -41,7 +42,8 @@ const OPTIONS: HomeOption[] = [
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const { mode, toggleMode } = useThemePreference();
+  const { mode } = useThemePreference();
+  const [bannerHeight, setBannerHeight] = useState(0);
   const { privacyOptionsRequired, showPrivacyOptionsForm } = useAdsConsent();
   const styles = useMemo(() => buildStyles(theme), [theme]);
   const logoSource =
@@ -51,54 +53,50 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.page} contentContainerStyle={styles.pageContent}>
-        <ImageBackground source={require('@/assets/images/frente_igreja.jpg')} style={styles.hero}>
-          <View style={styles.heroOverlay} />
-        </ImageBackground>
+      <View style={styles.body}>
+        <ScrollView style={styles.page} contentContainerStyle={styles.pageContent}>
+          <ImageBackground source={require('@/assets/images/frente_igreja.jpg')} style={styles.hero}>
+            <View style={styles.heroOverlay} />
+          </ImageBackground>
 
-        <View style={styles.card}>
-          <Image source={logoSource} style={styles.logo} resizeMode="contain" />
+          <View style={styles.card}>
+            <Image source={logoSource} style={styles.logo} resizeMode="contain" />
 
-          <View style={styles.titleArea}>
-            <Text style={styles.title}>Bíblia SIBB</Text>
-            <Text style={styles.subtitle}>Bíblia e Cantor Cristão disponíveis offline.</Text>
-          </View>
+            <View style={styles.titleArea}>
+              <Text style={styles.title}>Bíblia SIBB</Text>
+              <Text style={styles.subtitle}>Bíblia e Cantor Cristão disponíveis offline.</Text>
+            </View>
 
-          <Pressable style={styles.themeToggle} onPress={toggleMode}>
-            <Text style={styles.themeToggleIcon}>{mode === 'dark' ? '☀' : '☾'}</Text>
-            <Text style={styles.themeToggleText}>
-              {mode === 'dark' ? 'Usar modo claro' : 'Usar modo escuro'}
-            </Text>
-          </Pressable>
-
-          {privacyOptionsRequired ? (
-            <Pressable style={styles.themeToggle} onPress={showPrivacyOptionsForm}>
-              <Text style={styles.themeToggleIcon}>🔒</Text>
-              <Text style={styles.themeToggleText}>Gerenciar consentimento de anúncios</Text>
-            </Pressable>
-          ) : null}
-
-          <View style={styles.options}>
-            {OPTIONS.map((option) => (
-              <Pressable
-                key={option.route}
-                style={({ pressed }) => [styles.optionButton, pressed && styles.optionButtonPressed]}
-                onPress={() => router.push(option.route)}>
-                <View style={styles.iconWrap}>
-                  <Text style={styles.icon}>{option.icon}</Text>
-                </View>
-                <View style={styles.optionTextWrap}>
-                  <Text style={styles.optionTitle}>{option.title}</Text>
-                  <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
-                </View>
-                <Text style={styles.arrow}>›</Text>
+            {privacyOptionsRequired ? (
+              <Pressable style={styles.themeToggle} onPress={showPrivacyOptionsForm}>
+                <Text style={styles.themeToggleIcon}>🔒</Text>
+                <Text style={styles.themeToggleText}>Gerenciar consentimento de anúncios</Text>
               </Pressable>
-            ))}
+            ) : null}
+
+            <View style={styles.options}>
+              {OPTIONS.map((option) => (
+                <Pressable
+                  key={option.route}
+                  style={({ pressed }) => [styles.optionButton, pressed && styles.optionButtonPressed]}
+                  onPress={() => router.push(option.route)}>
+                  <View style={styles.iconWrap}>
+                    <Text style={styles.icon}>{option.icon}</Text>
+                  </View>
+                  <View style={styles.optionTextWrap}>
+                    <Text style={styles.optionTitle}>{option.title}</Text>
+                    <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+                  </View>
+                  <Text style={styles.arrow}>›</Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
+        </ScrollView>
+        <View style={styles.bannerWrap} onLayout={(event) => setBannerHeight(event.nativeEvent.layout.height)}>
+          <AppBannerAd />
         </View>
-      </ScrollView>
-      <View style={styles.bannerWrap}>
-        <AppBannerAd />
+        <ThemeToggleButton bottom={bannerHeight + Spacing.three} />
       </View>
     </SafeAreaView>
   );
@@ -118,6 +116,9 @@ function buildStyles(theme: {
     safeArea: {
       flex: 1,
       backgroundColor: theme.background,
+    },
+    body: {
+      flex: 1,
     },
     page: {
       flex: 1,

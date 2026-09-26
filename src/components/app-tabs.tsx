@@ -1,8 +1,10 @@
 import { router, Slot, usePathname } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppBannerAd } from '@/components/banner-ad';
+import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -22,6 +24,7 @@ export default function AppTabs() {
   const pathname = usePathname();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const [barHeight, setBarHeight] = useState(0);
   const styles = buildStyles(theme, insets.bottom);
 
   const visibleItems = NAV_ITEMS.filter((item) => item.route !== pathname);
@@ -29,7 +32,7 @@ export default function AppTabs() {
   return (
     <View style={styles.container}>
       <Slot />
-      <View style={styles.navWrap}>
+      <View style={styles.navWrap} onLayout={(event) => setBarHeight(event.nativeEvent.layout.height)}>
         <AppBannerAd />
         <View style={styles.navBar}>
           {visibleItems.map((item) => (
@@ -43,6 +46,7 @@ export default function AppTabs() {
           ))}
         </View>
       </View>
+      <ThemeToggleButton bottom={barHeight + Spacing.three} />
     </View>
   );
 }
