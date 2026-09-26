@@ -199,6 +199,28 @@ export default function BibleScreen() {
     await Share.share({ message });
   };
 
+  const chapterNav = (withShare: boolean) => (
+    <View style={styles.readerActions}>
+      <Pressable
+        disabled={!hasPreviousChapter}
+        style={[styles.secondaryButton, !hasPreviousChapter && styles.buttonDisabled]}
+        onPress={() => moveChapter(-1)}>
+        <Text style={styles.secondaryButtonText}>‹ Anterior</Text>
+      </Pressable>
+      {withShare && (
+        <Pressable style={styles.secondaryButton} onPress={shareChapter}>
+          <Text style={styles.secondaryButtonText}>Compartilhar</Text>
+        </Pressable>
+      )}
+      <Pressable
+        disabled={!hasNextChapter}
+        style={[styles.secondaryButton, !hasNextChapter && styles.buttonDisabled]}
+        onPress={() => moveChapter(1)}>
+        <Text style={styles.secondaryButtonText}>Próximo ›</Text>
+      </Pressable>
+    </View>
+  );
+
   const title =
     step === 'testament'
       ? 'Bíblia SIBB'
@@ -396,23 +418,7 @@ export default function BibleScreen() {
           <>
             {versionSelector}
 
-            <View style={styles.readerActions}>
-              <Pressable
-                disabled={!hasPreviousChapter}
-                style={[styles.secondaryButton, !hasPreviousChapter && styles.buttonDisabled]}
-                onPress={() => moveChapter(-1)}>
-                <Text style={styles.secondaryButtonText}>‹ Anterior</Text>
-              </Pressable>
-              <Pressable style={styles.secondaryButton} onPress={shareChapter}>
-                <Text style={styles.secondaryButtonText}>Compartilhar</Text>
-              </Pressable>
-              <Pressable
-                disabled={!hasNextChapter}
-                style={[styles.secondaryButton, !hasNextChapter && styles.buttonDisabled]}
-                onPress={() => moveChapter(1)}>
-                <Text style={styles.secondaryButtonText}>Próximo ›</Text>
-              </Pressable>
-            </View>
+            {chapterNav(true)}
 
             <View style={styles.reader}>
               {selectedChapter.map((verse, index) => (
@@ -425,6 +431,8 @@ export default function BibleScreen() {
                 </Pressable>
               ))}
             </View>
+
+            {chapterNav(false)}
           </>
         )}
       </ScrollView>
