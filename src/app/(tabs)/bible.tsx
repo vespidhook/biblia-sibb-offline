@@ -66,6 +66,22 @@ const MAX_SEARCH_RESULTS = 60;
 const testamentOfBook = (bookIndex: number): TestamentKey =>
   bookIndex < OLD_TESTAMENT_BOOKS ? 'old' : 'new';
 
+const formatVerseRanges = (verseIndexes: number[]) => {
+  const sorted = [...verseIndexes].sort((a, b) => a - b);
+  const ranges: string[] = [];
+  let start = 0;
+
+  for (let i = 0; i < sorted.length; i += 1) {
+    const isRangeEnd = i === sorted.length - 1 || sorted[i + 1] !== sorted[i] + 1;
+    if (isRangeEnd) {
+      ranges.push(sorted[start] === sorted[i] ? `${sorted[i] + 1}` : `${sorted[start] + 1}-${sorted[i] + 1}`);
+      start = i + 1;
+    }
+  }
+
+  return ranges.join(', ');
+};
+
 const previousStep = (step: Step): Step => {
   if (step === 'reader') return 'chapter';
   if (step === 'chapter') return 'book';
@@ -83,7 +99,7 @@ export default function BibleScreen() {
   const [bookIndex, setBookIndex] = useState(0);
   const [chapterIndex, setChapterIndex] = useState(0);
   const [query, setQuery] = useState('');
-  const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
+  const [selectedVerses, setSelectedVerses] = useState<number[]>([]);
 
   const bible = BIBLE_DATA[version];
   const selectedBook = bible[bookIndex];
@@ -138,7 +154,7 @@ export default function BibleScreen() {
   const chooseVersion = (next: BibleVersionKey) => {
     setVersion(next);
     if (chapterIndex >= BIBLE_DATA[next][bookIndex].chapters.length) setChapterIndex(0);
-    setSelectedVerse(null);
+    setSelectedVerses([]);
   };
 
   const chooseTestament = (next: TestamentKey) => {
@@ -149,13 +165,13 @@ export default function BibleScreen() {
   const chooseBook = (nextBookIndex: number) => {
     setBookIndex(nextBookIndex);
     setChapterIndex(0);
-    setSelectedVerse(null);
+    setSelectedVerses([]);
     setStep('chapter');
   };
 
   const chooseChapter = (nextChapterIndex: number) => {
     setChapterIndex(nextChapterIndex);
-    setSelectedVerse(null);
+    setSelectedVerses([]);
     setStep('reader');
   };
 
@@ -163,7 +179,7 @@ export default function BibleScreen() {
     setTestament(testamentOfBook(result.bookIndex));
     setBookIndex(result.bookIndex);
     setChapterIndex(result.chapterIndex);
-    setSelectedVerse(result.verseIndex);
+    setSelectedVerses([result.verseIndex]);
     setStep('reader');
   };
 
@@ -188,12 +204,21 @@ export default function BibleScreen() {
     setTestament(testamentOfBook(nextBook));
     setBookIndex(nextBook);
     setChapterIndex(nextChapter);
-    setSelectedVerse(null);
+    setSelectedVerses([]);
   };
 
-  const shareChapter = async () => {
-    const message = `${selectedBook.name} ${chapterIndex + 1} (${version.toUpperCase()})\n\n${selectedChapter
-      .map((verse, index) => `${index + 1}. ${verse}`)
+  const toggleVerse = (verseIndex: number) => {
+    setSelectedVerses((current) =>
+      current.includes(verseIndex)
+        ? current.filter((item) => item !== verseIndex)
+        : [...current, verseIndex],
+    );
+  };
+
+  const shareSelectedVerses = async () => {
+    const sorted = [...selectedVerses].sort((a, b) => a - b);
+    const message = `${selectedBook.name} ${chapterIndex + 1}:${formatVerseRanges(sorted)} (${version.toUpperCase()})\n\n${sorted
+      .map((index) => `${index + 1}. ${selectedChapter[index]}`)
       .join('\n')}\n\nBiblia SIBB`;
 
     await Share.share({ message });
@@ -207,9 +232,11 @@ export default function BibleScreen() {
         onPress={() => moveChapter(-1)}>
         <Text style={styles.secondaryButtonText}>‹ Anterior</Text>
       </Pressable>
-      {withShare && (
-        <Pressable style={styles.secondaryButton} onPress={shareChapter}>
-          <Text style={styles.secondaryButtonText}>Compartilhar</Text>
+      {withShare && selectedVerses.length > 0 && (
+        <Pressable style={styles.secondaryButton} onPress={shareSelectedVerses}>
+          <Text style={styles.secondaryButtonText}>
+            Compartilhar ({selectedVerses.length})
+          </Text>
         </Pressable>
       )}
       <Pressable
@@ -424,8 +451,11 @@ export default function BibleScreen() {
               {selectedChapter.map((verse, index) => (
                 <Pressable
                   key={`${selectedBook.abbrev}-${chapterIndex}-${index}`}
-                  style={[styles.verseRow, selectedVerse === index && styles.verseRowSelected]}
-                  onPress={() => setSelectedVerse(selectedVerse === index ? null : index)}>
+                  style={[
+                    styles.verseRow,
+                    selectedVerses.includes(index) && styles.verseRowSelected,
+                  ]}
+                  onPress={() => toggleVerse(index)}>
                   <Text style={styles.verseNumber}>{index + 1}</Text>
                   <Text style={styles.verseText}>{verse}</Text>
                 </Pressable>
@@ -759,7 +789,7 @@ function buildStyles(theme: {
       paddingHorizontal: Spacing.two,
     },
     verseRowSelected: {
-      backgroundColor: theme.backgroundElement,
+      backgroundColor: `${accentLight}22`,
     },
     verseNumber: {
       color: accentLight,
