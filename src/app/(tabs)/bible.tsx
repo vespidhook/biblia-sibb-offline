@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  BackHandler,
   FlatList,
   Pressable,
   ScrollView,
@@ -24,7 +25,8 @@ type BibleBook = {
 };
 
 type BibleVersionKey = 'aa' | 'acf' | 'nvi';
-type TestamentKey = 'all' | 'old' | 'new';
+type TestamentKey = 'old' | 'new';
+type Step = 'testament' | 'book' | 'chapter' | 'reader';
 
 type SearchResult = {
   bookIndex: number;
@@ -39,26 +41,45 @@ const BIBLE_DATA: Record<BibleVersionKey, BibleBook[]> = {
   nvi: nviBible as BibleBook[],
 };
 
-const VERSIONS: Array<{ key: BibleVersionKey; label: string; name: string }> = [
+const VERSIONS: { key: BibleVersionKey; label: string; name: string }[] = [
   { key: 'aa', label: 'AA', name: 'Almeida Atualizada' },
   { key: 'acf', label: 'ACF', name: 'Almeida Corrigida Fiel' },
-  { key: 'nvi', label: 'NVI', name: 'Nova Versao Internacional' },
+  { key: 'nvi', label: 'NVI', name: 'Nova Versão Internacional' },
 ];
 
-const TESTAMENTS: Array<{ key: TestamentKey; label: string }> = [
-  { key: 'all', label: 'Todos' },
-  { key: 'old', label: 'Velho' },
-  { key: 'new', label: 'Novo' },
+const OLD_TESTAMENT_BOOKS = 39;
+
+const TESTAMENTS: { key: TestamentKey; label: string; range: string }[] = [
+  { key: 'old', label: 'Antigo Testamento', range: 'Gênesis a Malaquias' },
+  { key: 'new', label: 'Novo Testamento', range: 'Mateus a Apocalipse' },
+];
+
+const STEPS: { key: Step; label: string }[] = [
+  { key: 'testament', label: 'Testamento' },
+  { key: 'book', label: 'Livro' },
+  { key: 'chapter', label: 'Capítulo' },
+  { key: 'reader', label: 'Leitura' },
 ];
 
 const MAX_SEARCH_RESULTS = 60;
 
+const testamentOfBook = (bookIndex: number): TestamentKey =>
+  bookIndex < OLD_TESTAMENT_BOOKS ? 'old' : 'new';
+
+const previousStep = (step: Step): Step => {
+  if (step === 'reader') return 'chapter';
+  if (step === 'chapter') return 'book';
+  return 'testament';
+};
+
 export default function BibleScreen() {
   const theme = useTheme();
   const styles = useMemo(() => buildStyles(theme), [theme]);
+  const scrollRef = useRef<ScrollView>(null);
 
   const [version, setVersion] = useState<BibleVersionKey>('aa');
-  const [testament, setTestament] = useState<TestamentKey>('all');
+  const [step, setStep] = useState<Step>('testament');
+  const [testament, setTestament] = useState<TestamentKey>('old');
   const [bookIndex, setBookIndex] = useState(0);
   const [chapterIndex, setChapterIndex] = useState(0);
   const [query, setQuery] = useState('');
@@ -67,11 +88,13 @@ export default function BibleScreen() {
   const bible = BIBLE_DATA[version];
   const selectedBook = bible[bookIndex];
   const selectedChapter = selectedBook.chapters[chapterIndex] ?? [];
+  const stepIndex = STEPS.findIndex((item) => item.key === step);
+  const testamentLabel = TESTAMENTS.find((item) => item.key === testament)?.label ?? '';
 
-  const visibleBooks = useMemo(() => {
-    if (testament === 'old') return bible.slice(0, 39).map((book, index) => ({ book, index }));
-    if (testament === 'new') return bible.slice(39).map((book, index) => ({ book, index: index + 39 }));
-    return bible.map((book, index) => ({ book, index }));
+  const testamentBooks = useMemo(() => {
+    const start = testament === 'old' ? 0 : OLD_TESTAMENT_BOOKS;
+    const end = testament === 'old' ? OLD_TESTAMENT_BOOKS : bible.length;
+    return bible.slice(start, end).map((book, offset) => ({ book, index: start + offset }));
   }, [bible, testament]);
 
   const searchResults = useMemo(() => {
@@ -95,21 +118,77 @@ export default function BibleScreen() {
     return results;
   }, [bible, query]);
 
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [step, bookIndex, chapterIndex]);
+
+  // Registered only after the first step so it runs before the tabs layout handler,
+  // which sends the user back home.
+  useEffect(() => {
+    if (step === 'testament') return undefined;
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setStep(previousStep);
+      return true;
+    });
+
+    return () => subscription.remove();
+  }, [step]);
+
+  const chooseVersion = (next: BibleVersionKey) => {
+    setVersion(next);
+    if (chapterIndex >= BIBLE_DATA[next][bookIndex].chapters.length) setChapterIndex(0);
+    setSelectedVerse(null);
+  };
+
+  const chooseTestament = (next: TestamentKey) => {
+    setTestament(next);
+    setStep('book');
+  };
+
   const chooseBook = (nextBookIndex: number) => {
     setBookIndex(nextBookIndex);
     setChapterIndex(0);
     setSelectedVerse(null);
+    setStep('chapter');
   };
 
   const chooseChapter = (nextChapterIndex: number) => {
     setChapterIndex(nextChapterIndex);
     setSelectedVerse(null);
+    setStep('reader');
   };
 
   const goToResult = (result: SearchResult) => {
+    setTestament(testamentOfBook(result.bookIndex));
     setBookIndex(result.bookIndex);
     setChapterIndex(result.chapterIndex);
     setSelectedVerse(result.verseIndex);
+    setStep('reader');
+  };
+
+  const hasPreviousChapter = bookIndex > 0 || chapterIndex > 0;
+  const hasNextChapter =
+    bookIndex < bible.length - 1 || chapterIndex < selectedBook.chapters.length - 1;
+
+  const moveChapter = (delta: 1 | -1) => {
+    let nextBook = bookIndex;
+    let nextChapter = chapterIndex + delta;
+
+    if (nextChapter < 0) {
+      nextBook -= 1;
+      if (nextBook < 0) return;
+      nextChapter = bible[nextBook].chapters.length - 1;
+    } else if (nextChapter >= selectedBook.chapters.length) {
+      nextBook += 1;
+      if (nextBook >= bible.length) return;
+      nextChapter = 0;
+    }
+
+    setTestament(testamentOfBook(nextBook));
+    setBookIndex(nextBook);
+    setChapterIndex(nextChapter);
+    setSelectedVerse(null);
   };
 
   const shareChapter = async () => {
@@ -120,144 +199,234 @@ export default function BibleScreen() {
     await Share.share({ message });
   };
 
+  const title =
+    step === 'testament'
+      ? 'Bíblia SIBB'
+      : step === 'book'
+        ? testamentLabel
+        : step === 'chapter'
+          ? selectedBook.name
+          : `${selectedBook.name} ${chapterIndex + 1}`;
+
+  const subtitle =
+    step === 'testament'
+      ? 'Escolha o testamento para começar a leitura.'
+      : step === 'book'
+        ? 'Escolha um livro.'
+        : step === 'chapter'
+          ? 'Escolha um capítulo.'
+          : `${testamentLabel} · ${VERSIONS.find((item) => item.key === version)?.name}`;
+
+  const versionSelector = (
+    <View style={styles.section}>
+      <Text style={styles.sectionLabel}>Versão</Text>
+      <View style={styles.segmented}>
+        {VERSIONS.map((item) => (
+          <Pressable
+            key={item.key}
+            style={[styles.segmentButton, version === item.key && styles.segmentButtonActive]}
+            onPress={() => chooseVersion(item.key)}>
+            <Text style={[styles.segmentText, version === item.key && styles.segmentTextActive]}>
+              {item.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={styles.helperText}>{VERSIONS.find((item) => item.key === version)?.name}</Text>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
+        ref={scrollRef}
         style={styles.screen}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <Text style={styles.kicker}>Biblia Offline</Text>
-          <Text style={styles.title}>Bíblia SIBB</Text>
-          <Text style={styles.subtitle}>Leia sem internet, com busca local nas versões disponíveis.</Text>
-        </View>
+        <View style={styles.stepper}>
+          {STEPS.map((item, index) => {
+            const isCurrent = index === stepIndex;
+            const isDone = index < stepIndex;
 
-        <View style={styles.searchBox}>
-          <Text style={styles.sectionLabel}>Buscar</Text>
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Digite ao menos 3 letras"
-            placeholderTextColor={theme.textSecondary}
-            style={styles.input}
-            returnKeyType="search"
-          />
-        </View>
-
-        {query.trim().length >= 3 && (
-          <FlatList
-            data={searchResults}
-            keyExtractor={(item) => `${item.bookIndex}-${item.chapterIndex}-${item.verseIndex}`}
-            scrollEnabled={false}
-            ListHeaderComponent={
-              <Text style={styles.resultSummary}>
-                {searchResults.length} resultado{searchResults.length === 1 ? '' : 's'}
-                {searchResults.length >= MAX_SEARCH_RESULTS ? ' encontrados, mostrando os primeiros' : ''}
-              </Text>
-            }
-            ListEmptyComponent={<Text style={styles.emptyText}>Nenhum versículo encontrado.</Text>}
-            renderItem={({ item }) => (
-              <Pressable style={styles.searchResult} onPress={() => goToResult(item)}>
-                <Text style={styles.searchRef}>
-                  {bible[item.bookIndex].name} {item.chapterIndex + 1}:{item.verseIndex + 1}
+            return (
+              <Pressable
+                key={item.key}
+                disabled={!isDone}
+                style={[
+                  styles.stepChip,
+                  isCurrent && styles.stepChipCurrent,
+                  isDone && styles.stepChipDone,
+                ]}
+                onPress={() => setStep(item.key)}>
+                <Text
+                  style={[
+                    styles.stepNumber,
+                    (isCurrent || isDone) && styles.stepTextHighlight,
+                  ]}>
+                  {index + 1}
                 </Text>
-                <Text numberOfLines={3} style={styles.searchText}>
-                  {item.text}
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.stepLabel,
+                    isCurrent && styles.stepLabelCurrent,
+                    isDone && styles.stepLabelDone,
+                  ]}>
+                  {item.label}
                 </Text>
               </Pressable>
+            );
+          })}
+        </View>
+
+        <View style={styles.header}>
+          {step !== 'testament' && (
+            <Pressable style={styles.backButton} onPress={() => setStep(previousStep)}>
+              <Text style={styles.backButtonText}>‹ Voltar</Text>
+            </Pressable>
+          )}
+          <Text style={styles.kicker}>Etapa {stepIndex + 1} de {STEPS.length}</Text>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.subtitle}>{subtitle}</Text>
+        </View>
+
+        {step === 'testament' && (
+          <>
+            <View style={styles.searchBox}>
+              <Text style={styles.sectionLabel}>Buscar</Text>
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Digite ao menos 3 letras"
+                placeholderTextColor={theme.textSecondary}
+                style={styles.input}
+                returnKeyType="search"
+              />
+            </View>
+
+            {query.trim().length >= 3 && (
+              <FlatList
+                data={searchResults}
+                keyExtractor={(item) => `${item.bookIndex}-${item.chapterIndex}-${item.verseIndex}`}
+                scrollEnabled={false}
+                ListHeaderComponent={
+                  <Text style={styles.resultSummary}>
+                    {searchResults.length} resultado{searchResults.length === 1 ? '' : 's'}
+                    {searchResults.length >= MAX_SEARCH_RESULTS ? ' encontrados, mostrando os primeiros' : ''}
+                  </Text>
+                }
+                ListEmptyComponent={<Text style={styles.emptyText}>Nenhum versículo encontrado.</Text>}
+                renderItem={({ item }) => (
+                  <Pressable style={styles.searchResult} onPress={() => goToResult(item)}>
+                    <Text style={styles.searchRef}>
+                      {bible[item.bookIndex].name} {item.chapterIndex + 1}:{item.verseIndex + 1}
+                    </Text>
+                    <Text numberOfLines={3} style={styles.searchText}>
+                      {item.text}
+                    </Text>
+                  </Pressable>
+                )}
+              />
             )}
-          />
+
+            {versionSelector}
+
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Testamento</Text>
+              {TESTAMENTS.map((item) => (
+                <Pressable
+                  key={item.key}
+                  style={({ pressed }) => [styles.optionCard, pressed && styles.optionCardPressed]}
+                  onPress={() => chooseTestament(item.key)}>
+                  <View style={styles.optionTextWrap}>
+                    <Text style={styles.optionTitle}>{item.label}</Text>
+                    <Text style={styles.optionSubtitle}>
+                      {item.range} · {item.key === 'old' ? OLD_TESTAMENT_BOOKS : bible.length - OLD_TESTAMENT_BOOKS} livros
+                    </Text>
+                  </View>
+                  <Text style={styles.optionArrow}>›</Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
         )}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Versão</Text>
-          <View style={styles.segmented}>
-            {VERSIONS.map((item) => (
-              <Pressable
-                key={item.key}
-                style={[styles.segmentButton, version === item.key && styles.segmentButtonActive]}
-                onPress={() => {
-                  setVersion(item.key);
-                  setBookIndex(0);
-                  setChapterIndex(0);
-                  setSelectedVerse(null);
-                }}>
-                <Text style={[styles.segmentText, version === item.key && styles.segmentTextActive]}>
-                  {item.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-          <Text style={styles.helperText}>{VERSIONS.find((item) => item.key === version)?.name}</Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Testamento</Text>
-          <View style={styles.segmented}>
-            {TESTAMENTS.map((item) => (
-              <Pressable
-                key={item.key}
-                style={[styles.segmentButton, testament === item.key && styles.segmentButtonActive]}
-                onPress={() => setTestament(item.key)}>
-                <Text style={[styles.segmentText, testament === item.key && styles.segmentTextActive]}>
-                  {item.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Livro</Text>
+        {step === 'book' && (
           <View style={styles.bookGrid}>
-            {visibleBooks.map(({ book, index }) => (
+            {testamentBooks.map(({ book, index }) => (
               <Pressable
                 key={book.abbrev}
-                style={[styles.bookButton, bookIndex === index && styles.bookButtonActive]}
+                style={({ pressed }) => [
+                  styles.bookButton,
+                  bookIndex === index && styles.bookButtonActive,
+                  pressed && styles.optionCardPressed,
+                ]}
                 onPress={() => chooseBook(index)}>
-                <Text style={[styles.bookText, bookIndex === index && styles.bookTextActive]}>
+                <Text style={[styles.bookText, bookIndex === index && styles.bookTextActive]} numberOfLines={1}>
                   {book.name}
+                </Text>
+                <Text style={[styles.bookMeta, bookIndex === index && styles.bookTextActive]}>
+                  {book.chapters.length} {book.chapters.length === 1 ? 'capítulo' : 'capítulos'}
                 </Text>
               </Pressable>
             ))}
           </View>
-        </View>
+        )}
 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionLabel}>Capítulo</Text>
-            <Pressable style={styles.secondaryButton} onPress={shareChapter}>
-              <Text style={styles.secondaryButtonText}>Compartilhar</Text>
-            </Pressable>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chapterRow}>
+        {step === 'chapter' && (
+          <View style={styles.chapterGrid}>
             {selectedBook.chapters.map((_, index) => (
               <Pressable
                 key={`${selectedBook.abbrev}-${index}`}
-                style={[styles.chapterButton, chapterIndex === index && styles.chapterButtonActive]}
+                style={({ pressed }) => [
+                  styles.chapterButton,
+                  chapterIndex === index && styles.chapterButtonActive,
+                  pressed && styles.optionCardPressed,
+                ]}
                 onPress={() => chooseChapter(index)}>
                 <Text style={[styles.chapterText, chapterIndex === index && styles.chapterTextActive]}>
                   {index + 1}
                 </Text>
               </Pressable>
             ))}
-          </ScrollView>
-        </View>
+          </View>
+        )}
 
-        <View style={styles.reader}>
-          <Text style={styles.readerTitle}>
-            {selectedBook.name} {chapterIndex + 1}
-          </Text>
-          {selectedChapter.map((verse, index) => (
-            <Pressable
-              key={`${selectedBook.abbrev}-${chapterIndex}-${index}`}
-              style={[styles.verseRow, selectedVerse === index && styles.verseRowSelected]}
-              onPress={() => setSelectedVerse(selectedVerse === index ? null : index)}>
-              <Text style={styles.verseNumber}>{index + 1}</Text>
-              <Text style={styles.verseText}>{verse}</Text>
-            </Pressable>
-          ))}
-        </View>
+        {step === 'reader' && (
+          <>
+            {versionSelector}
+
+            <View style={styles.readerActions}>
+              <Pressable
+                disabled={!hasPreviousChapter}
+                style={[styles.secondaryButton, !hasPreviousChapter && styles.buttonDisabled]}
+                onPress={() => moveChapter(-1)}>
+                <Text style={styles.secondaryButtonText}>‹ Anterior</Text>
+              </Pressable>
+              <Pressable style={styles.secondaryButton} onPress={shareChapter}>
+                <Text style={styles.secondaryButtonText}>Compartilhar</Text>
+              </Pressable>
+              <Pressable
+                disabled={!hasNextChapter}
+                style={[styles.secondaryButton, !hasNextChapter && styles.buttonDisabled]}
+                onPress={() => moveChapter(1)}>
+                <Text style={styles.secondaryButtonText}>Próximo ›</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.reader}>
+              {selectedChapter.map((verse, index) => (
+                <Pressable
+                  key={`${selectedBook.abbrev}-${chapterIndex}-${index}`}
+                  style={[styles.verseRow, selectedVerse === index && styles.verseRowSelected]}
+                  onPress={() => setSelectedVerse(selectedVerse === index ? null : index)}>
+                  <Text style={styles.verseNumber}>{index + 1}</Text>
+                  <Text style={styles.verseText}>{verse}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -361,12 +530,6 @@ function buildStyles(theme: {
     section: {
       gap: Spacing.two,
     },
-    sectionHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: Spacing.two,
-    },
     sectionLabel: {
       color: theme.text,
       fontSize: 14,
@@ -408,12 +571,15 @@ function buildStyles(theme: {
       gap: Spacing.two,
     },
     bookButton: {
+      width: '48.5%',
       borderWidth: 1,
       borderColor: border,
-      borderRadius: 8,
+      borderRadius: 10,
       paddingHorizontal: Spacing.three,
-      minHeight: 38,
+      paddingVertical: Spacing.two,
+      minHeight: 58,
       justifyContent: 'center',
+      gap: 2,
       backgroundColor: theme.backgroundElement,
     },
     bookButtonActive: {
@@ -422,14 +588,21 @@ function buildStyles(theme: {
     },
     bookText: {
       color: theme.text,
-      fontSize: 13,
-      fontWeight: '700',
+      fontSize: 15,
+      fontWeight: '800',
+    },
+    bookMeta: {
+      color: theme.textSecondary,
+      fontSize: 12,
+      fontWeight: '600',
     },
     bookTextActive: {
       color: '#ffffff',
     },
     secondaryButton: {
-      minHeight: 36,
+      flex: 1,
+      minHeight: 40,
+      alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 1,
       borderColor: accentLight,
@@ -441,13 +614,14 @@ function buildStyles(theme: {
       fontSize: 13,
       fontWeight: '800',
     },
-    chapterRow: {
+    chapterGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: Spacing.two,
-      paddingRight: Spacing.three,
     },
     chapterButton: {
-      width: 42,
-      height: 42,
+      width: 56,
+      height: 56,
       borderRadius: 8,
       alignItems: 'center',
       justifyContent: 'center',
@@ -461,24 +635,113 @@ function buildStyles(theme: {
     },
     chapterText: {
       color: theme.text,
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: '800',
     },
     chapterTextActive: {
       color: '#ffffff',
+    },
+    stepper: {
+      flexDirection: 'row',
+      gap: Spacing.one,
+    },
+    stepChip: {
+      flex: 1,
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 2,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: border,
+      backgroundColor: theme.backgroundElement,
+      paddingHorizontal: 2,
+    },
+    stepChipCurrent: {
+      backgroundColor: accentLight,
+      borderColor: accentLight,
+    },
+    stepChipDone: {
+      borderColor: accentLight,
+    },
+    stepNumber: {
+      color: theme.textSecondary,
+      fontSize: 13,
+      lineHeight: 15,
+      fontWeight: '900',
+    },
+    stepTextHighlight: {
+      color: accentLight,
+    },
+    stepLabel: {
+      color: theme.textSecondary,
+      fontSize: 10,
+      fontWeight: '700',
+    },
+    stepLabelCurrent: {
+      color: '#ffffff',
+    },
+    stepLabelDone: {
+      color: accentLight,
+    },
+    backButton: {
+      alignSelf: 'flex-start',
+      minHeight: 36,
+      justifyContent: 'center',
+      paddingRight: Spacing.three,
+    },
+    backButtonText: {
+      color: accentLight,
+      fontSize: 15,
+      fontWeight: '800',
+    },
+    optionCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.two,
+      minHeight: 84,
+      borderWidth: 1,
+      borderColor: border,
+      borderRadius: 10,
+      padding: Spacing.three,
+      backgroundColor: theme.backgroundElement,
+    },
+    optionCardPressed: {
+      opacity: 0.78,
+    },
+    optionTextWrap: {
+      flex: 1,
+      gap: Spacing.one,
+    },
+    optionTitle: {
+      color: theme.text,
+      fontSize: 18,
+      lineHeight: 24,
+      fontWeight: '800',
+    },
+    optionSubtitle: {
+      color: theme.textSecondary,
+      fontSize: 13,
+      lineHeight: 19,
+    },
+    optionArrow: {
+      color: accentLight,
+      fontSize: 28,
+      lineHeight: 30,
+      fontWeight: '300',
+    },
+    readerActions: {
+      flexDirection: 'row',
+      gap: Spacing.two,
+    },
+    buttonDisabled: {
+      opacity: 0.4,
     },
     reader: {
       borderTopWidth: 1,
       borderTopColor: border,
       paddingTop: Spacing.three,
       gap: Spacing.two,
-    },
-    readerTitle: {
-      color: theme.text,
-      fontSize: 24,
-      lineHeight: 30,
-      fontWeight: '800',
-      marginBottom: Spacing.one,
     },
     verseRow: {
       flexDirection: 'row',
