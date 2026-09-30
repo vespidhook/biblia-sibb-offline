@@ -6,13 +6,13 @@ import {
   ScrollView,
   Share,
   StyleSheet,
-  Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppBannerAd } from '@/components/banner-ad';
+import { Text, TextInput } from '@/components/accessible-text';
+import { TextSizeControls } from '@/components/text-size-controls';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { SHARE_FOOTER } from '@/constants/share';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -26,8 +26,6 @@ type Hymn = {
 };
 
 const HYMNS = hymnsData as Hymn[];
-const MIN_FONT_SIZE = 14;
-const MAX_FONT_SIZE = 28;
 
 const TITLE_CASE_EXCEPTIONS = new Set(['a', 'e', 'o', 'as', 'os', 'de', 'da', 'do', 'das', 'dos', 'em', 'por']);
 
@@ -49,7 +47,6 @@ export default function HymnalScreen() {
 
   const [query, setQuery] = useState('');
   const [selectedHymn, setSelectedHymn] = useState<Hymn | null>(null);
-  const [fontSize, setFontSize] = useState(17);
   const [modalBannerHeight, setModalBannerHeight] = useState(0);
 
   const filteredHymns = useMemo(() => {
@@ -70,9 +67,6 @@ export default function HymnalScreen() {
     });
   };
 
-  const changeFontSize = (nextSize: number) => {
-    setFontSize(Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, nextSize)));
-  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -87,6 +81,7 @@ export default function HymnalScreen() {
             <Text style={styles.kicker}>Hinário Offline</Text>
             <Text style={styles.title}>Cantor Cristão</Text>
             <Text style={styles.subtitle}>Busque por número ou título e leia a letra sem conexão.</Text>
+            <TextSizeControls />
 
             <View style={styles.searchBox}>
               <Text style={styles.sectionLabel}>Buscar hino</Text>
@@ -118,7 +113,7 @@ export default function HymnalScreen() {
             <View style={styles.hymnNumber}>
               <Text style={styles.hymnNumberText}>{item.id}</Text>
             </View>
-            <Text style={styles.hymnTitle} numberOfLines={2}>
+            <Text style={styles.hymnTitle}>
               {toTitleCase(item.title)}
             </Text>
             <Text style={styles.chevron}>›</Text>
@@ -131,33 +126,27 @@ export default function HymnalScreen() {
           <View style={styles.modalBody}>
             {selectedHymn && (
               <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <View style={styles.modalTitleWrap}>
-                    <Text style={styles.modalNumber}>{selectedHymn.id}</Text>
-                    <Text style={styles.modalTitle} numberOfLines={2}>
-                      {toTitleCase(selectedHymn.title)}
-                    </Text>
-                  </View>
-                  <Pressable style={styles.closeButton} onPress={() => setSelectedHymn(null)}>
-                    <Text style={styles.closeButtonText}>Fechar</Text>
-                  </Pressable>
-                </View>
-
-                <View style={styles.controls}>
-                  <Pressable style={styles.controlButton} onPress={() => changeFontSize(fontSize - 1)}>
-                    <Text style={styles.controlText}>A-</Text>
-                  </Pressable>
-                  <Text style={styles.fontSizeText}>{fontSize}</Text>
-                  <Pressable style={styles.controlButton} onPress={() => changeFontSize(fontSize + 1)}>
-                    <Text style={styles.controlText}>A+</Text>
-                  </Pressable>
-                  <Pressable style={styles.shareButton} onPress={shareHymn}>
-                    <Text style={styles.shareButtonText}>Compartilhar</Text>
-                  </Pressable>
-                </View>
-
                 <ScrollView style={styles.lyricsScroll} contentContainerStyle={styles.lyricsContent}>
-                  <Text style={[styles.lyricsText, { fontSize, lineHeight: fontSize * 1.65 }]}>
+                  <View style={styles.modalHeader}>
+                    <View style={styles.modalTitleWrap}>
+                      <Text style={styles.modalNumber}>{selectedHymn.id}</Text>
+                      <Text style={styles.modalTitle}>
+                        {toTitleCase(selectedHymn.title)}
+                      </Text>
+                    </View>
+                    <Pressable style={styles.closeButton} onPress={() => setSelectedHymn(null)}>
+                      <Text style={styles.closeButtonText}>Fechar</Text>
+                    </Pressable>
+                  </View>
+
+                  <View style={styles.controls}>
+                    <TextSizeControls />
+                    <Pressable style={styles.shareButton} onPress={shareHymn}>
+                      <Text style={styles.shareButtonText}>Compartilhar</Text>
+                    </Pressable>
+                  </View>
+
+                  <Text style={styles.lyricsText}>
                     {selectedHymn.lyrics.trim()}
                   </Text>
                 </ScrollView>
@@ -265,8 +254,9 @@ function buildStyles(theme: {
       backgroundColor: theme.backgroundElement,
     },
     hymnNumber: {
-      width: 42,
-      height: 42,
+      minWidth: 42,
+      minHeight: 42,
+      padding: Spacing.one,
       borderRadius: 8,
       alignItems: 'center',
       justifyContent: 'center',
@@ -366,32 +356,9 @@ function buildStyles(theme: {
       fontWeight: '800',
     },
     controls: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'stretch',
       gap: Spacing.two,
       paddingVertical: Spacing.three,
-    },
-    controlButton: {
-      width: 44,
-      height: 40,
-      borderRadius: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: theme.cell,
-      borderWidth: 1,
-      borderColor: border,
-    },
-    controlText: {
-      color: theme.text,
-      fontSize: 15,
-      fontWeight: '900',
-    },
-    fontSizeText: {
-      minWidth: 34,
-      color: theme.textSecondary,
-      textAlign: 'center',
-      fontSize: 14,
-      fontWeight: '800',
     },
     shareButton: {
       marginLeft: 'auto',
@@ -414,6 +381,8 @@ function buildStyles(theme: {
     },
     lyricsText: {
       color: theme.text,
+      fontSize: 17,
+      lineHeight: 28,
     },
   });
 }
