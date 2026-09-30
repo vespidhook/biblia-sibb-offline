@@ -6,12 +6,14 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
+  Text as NativeText,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppBannerAd } from '@/components/banner-ad';
+import { Text } from '@/components/accessible-text';
+import { TextSizeControls } from '@/components/text-size-controls';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useAdsConsent } from '@/contexts/ads-consent';
@@ -22,10 +24,16 @@ type HomeOption = {
   title: string;
   subtitle: string;
   icon: string;
-  route: '/bible' | '/explore';
+  route: '/bible' | '/explore' | '/progress';
 };
 
 const OPTIONS: HomeOption[] = [
+  {
+    title: 'Meu progresso',
+    subtitle: 'Veja os capítulos lidos e continue sua leitura',
+    icon: '✓',
+    route: '/progress',
+  },
   {
     title: 'Bíblia',
     subtitle: 'Leia por versão, livro e capítulo',
@@ -74,6 +82,7 @@ export default function HomeScreen() {
               </Pressable>
             ) : null}
 
+            <TextSizeControls />
             <View style={styles.options}>
               {OPTIONS.map((option) => (
                 <Pressable
@@ -81,7 +90,7 @@ export default function HomeScreen() {
                   style={({ pressed }) => [styles.optionButton, pressed && styles.optionButtonPressed]}
                   onPress={() => router.push(option.route)}>
                   <View style={styles.iconWrap}>
-                    <Text style={styles.icon}>{option.icon}</Text>
+                    <NativeText style={styles.icon}>{option.icon}</NativeText>
                   </View>
                   <View style={styles.optionTextWrap}>
                     <Text style={styles.optionTitle}>{option.title}</Text>

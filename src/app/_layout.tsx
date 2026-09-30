@@ -1,7 +1,9 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { ChurchSplash } from '@/components/church-splash';
+import { TextSizePreferenceProvider } from '@/contexts/text-size-preference';
+import { ReadingProgressProvider } from '@/contexts/reading-progress';
 import { AdsConsentProvider } from '@/contexts/ads-consent';
 import { ThemePreferenceProvider, useThemePreference } from '@/contexts/theme-preference';
 
@@ -11,7 +13,11 @@ export default function TabLayout() {
   return (
     <AdsConsentProvider>
       <ThemePreferenceProvider>
-        <RootNavigator />
+        <TextSizePreferenceProvider>
+          <ReadingProgressProvider>
+            <RootNavigator />
+          </ReadingProgressProvider>
+        </TextSizePreferenceProvider>
       </ThemePreferenceProvider>
     </AdsConsentProvider>
   );
@@ -22,11 +28,11 @@ function RootNavigator() {
 
   return (
     <ThemeProvider value={mode === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(tabs)" />
       </Stack>
+      <ChurchSplash />
     </ThemeProvider>
   );
 }

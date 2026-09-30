@@ -4,11 +4,11 @@
     "slug": "biblia-sibb-offline",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/sibb-icon.png",
     "scheme": "bibliasibboffline",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/sibb-icon.png"
     },
     "android": {
       "package": "com.bibliasibb",
@@ -16,26 +16,22 @@
       "permissions": [
         "com.google.android.gms.permission.AD_ID"
       ],
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      },
+      "icon": "./assets/images/sibb-icon.png",
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/sibb-icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#1e3a8a",
+          "image": "./assets/images/logo-branco.png",
+          "imageWidth": 280,
+          "resizeMode": "contain"
         }
       ],
       [
@@ -43,7 +39,8 @@
         {
           "androidAppId": "ca-app-pub-6713691064940085~4568455411"
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,

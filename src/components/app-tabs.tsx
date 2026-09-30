@@ -1,6 +1,7 @@
 import { router, Slot, usePathname } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/accessible-text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppBannerAd } from '@/components/banner-ad';
@@ -11,10 +12,11 @@ import { useTheme } from '@/hooks/use-theme';
 type NavItem = {
   label: string;
   icon: string;
-  route: '/' | '/bible' | '/explore';
+  route: '/' | '/bible' | '/explore' | '/progress';
 };
 
 const NAV_ITEMS: NavItem[] = [
+  { label: 'Progresso', icon: '✓', route: '/progress' },
   { label: 'Início', icon: '🏠', route: '/' },
   { label: 'Bíblia', icon: '📖', route: '/bible' },
   { label: 'Cantor', icon: '🎵', route: '/explore' },

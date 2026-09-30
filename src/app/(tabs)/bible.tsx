@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { ChapterReadControl } from '@/components/chapter-read-control';
+import { useReadingProgress } from '@/contexts/reading-progress';
+import { BIBLE_BOOKS, chapterKey } from '@/utils/reading-progress';
 import {
   BackHandler,
   FlatList,
@@ -6,11 +10,11 @@ import {
   ScrollView,
   Share,
   StyleSheet,
-  Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Text, TextInput } from '@/components/accessible-text';
+import { TextSizeControls } from '@/components/text-size-controls';
 
 import { SHARE_FOOTER } from '@/constants/share';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -90,15 +94,24 @@ const previousStep = (step: Step): Step => {
 };
 
 export default function BibleScreen() {
+  const params = useLocalSearchParams<{ book?: string; chapter?: string }>();
+  const index = BIBLE_BOOKS.findIndex((book) => book.id === params.book);
+  const chapter = Number(params.chapter);
+  const valid = index >= 0 && Number.isInteger(chapter) && chapter >= 1 && chapter <= BIBLE_BOOKS[index].chapters;
+  return <BibleReader key={valid ? `${index}:${chapter}` : 'browse'} initialBook={valid ? index : undefined} initialChapter={valid ? chapter - 1 : undefined} />;
+}
+
+function BibleReader({ initialBook, initialChapter }: { initialBook?: number; initialChapter?: number }) {
   const theme = useTheme();
+  const { progress, ready: progressReady } = useReadingProgress();
   const styles = useMemo(() => buildStyles(theme), [theme]);
   const scrollRef = useRef<ScrollView>(null);
 
   const [version, setVersion] = useState<BibleVersionKey>('aa');
-  const [step, setStep] = useState<Step>('testament');
-  const [testament, setTestament] = useState<TestamentKey>('old');
-  const [bookIndex, setBookIndex] = useState(0);
-  const [chapterIndex, setChapterIndex] = useState(0);
+  const [step, setStep] = useState<Step>(initialBook === undefined ? 'testament' : 'reader');
+  const [testament, setTestament] = useState<TestamentKey>(testamentOfBook(initialBook ?? 0));
+  const [bookIndex, setBookIndex] = useState(initialBook ?? 0);
+  const [chapterIndex, setChapterIndex] = useState(initialChapter ?? 0);
   const [query, setQuery] = useState('');
   const [selectedVerses, setSelectedVerses] = useState<number[]>([]);
 
@@ -288,6 +301,7 @@ export default function BibleScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.textControls}><TextSizeControls /></View>
       <ScrollView
         ref={scrollRef}
         style={styles.screen}
@@ -316,7 +330,6 @@ export default function BibleScreen() {
                   {index + 1}
                 </Text>
                 <Text
-                  numberOfLines={1}
                   style={[
                     styles.stepLabel,
                     isCurrent && styles.stepLabelCurrent,
@@ -412,7 +425,7 @@ export default function BibleScreen() {
                   pressed && styles.optionCardPressed,
                 ]}
                 onPress={() => chooseBook(index)}>
-                <Text style={[styles.bookText, bookIndex === index && styles.bookTextActive]} numberOfLines={1}>
+                <Text style={[styles.bookText, bookIndex === index && styles.bookTextActive]}>
                   {book.name}
                 </Text>
                 <Text style={[styles.bookMeta, bookIndex === index && styles.bookTextActive]}>
@@ -435,7 +448,7 @@ export default function BibleScreen() {
                 ]}
                 onPress={() => chooseChapter(index)}>
                 <Text style={[styles.chapterText, chapterIndex === index && styles.chapterTextActive]}>
-                  {index + 1}
+                  {index + 1}{progressReady && progress[chapterKey(BIBLE_BOOKS[bookIndex].id, index + 1)] ? ' ✓' : ''}
                 </Text>
               </Pressable>
             ))}
@@ -447,6 +460,7 @@ export default function BibleScreen() {
             {versionSelector}
 
             {chapterNav(true)}
+            <ChapterReadControl bookId={BIBLE_BOOKS[bookIndex].id} chapter={chapterIndex + 1} />
 
             <View style={styles.reader}>
               {selectedChapter.map((verse, index) => (
@@ -464,6 +478,7 @@ export default function BibleScreen() {
             </View>
 
             {chapterNav(false)}
+            <ChapterReadControl bookId={BIBLE_BOOKS[bookIndex].id} chapter={chapterIndex + 1} />
           </>
         )}
       </ScrollView>
@@ -486,6 +501,13 @@ function buildStyles(theme: {
   const border = theme.backgroundSelected;
 
   return StyleSheet.create({
+    textControls: {
+      width: '100%',
+      maxWidth: MaxContentWidth,
+      alignSelf: 'center',
+      paddingHorizontal: Spacing.three,
+      paddingTop: Spacing.two,
+    },
     safeArea: {
       flex: 1,
       backgroundColor: theme.background,
@@ -640,6 +662,7 @@ function buildStyles(theme: {
     },
     secondaryButton: {
       flex: 1,
+      minWidth: 120,
       minHeight: 40,
       alignItems: 'center',
       justifyContent: 'center',
@@ -659,8 +682,9 @@ function buildStyles(theme: {
       gap: Spacing.two,
     },
     chapterButton: {
-      width: 56,
-      height: 56,
+      minWidth: 56,
+      minHeight: 56,
+      padding: Spacing.two,
       borderRadius: 8,
       alignItems: 'center',
       justifyContent: 'center',
@@ -682,10 +706,12 @@ function buildStyles(theme: {
     },
     stepper: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: Spacing.one,
     },
     stepChip: {
       flex: 1,
+      minWidth: '40%',
       minHeight: 44,
       alignItems: 'center',
       justifyContent: 'center',
@@ -771,6 +797,7 @@ function buildStyles(theme: {
     },
     readerActions: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: Spacing.two,
     },
     buttonDisabled: {
