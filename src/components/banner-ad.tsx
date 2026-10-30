@@ -8,7 +8,7 @@ import { useTheme } from '@/hooks/use-theme';
 // aren't available in the Expo Go / web bundle, so this component only renders
 // on native platforms and is a no-op everywhere else.
 const AdUnitId =
-  Platform.OS === 'android' ? 'ca-app-pub-6713691064940085/2073230573' : undefined;
+  Platform.OS === 'android' ? 'ca-app-pub-6713691064940085/7626713545' : undefined;
 
 export function AppBannerAd() {
   const theme = useTheme();
