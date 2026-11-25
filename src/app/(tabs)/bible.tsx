@@ -17,8 +17,10 @@ import { Text, TextInput } from '@/components/accessible-text';
 import { TextSizeControls } from '@/components/text-size-controls';
 
 import { SHARE_FOOTER } from '@/constants/share';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Radii, BrandFonts, BottomTabInset, MaxContentWidth, Spacing, type ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { Anniversary69Banner, ThemeVerseCard } from '@/components/anniversary-69';
+import { THEME_VERSE, isAnniversaryActive } from '@/constants/anniversary';
 import aaBible from '../../assets/jsons/biblia/aa.json';
 import acfBible from '../../assets/jsons/biblia/acf.json';
 import nviBible from '../../assets/jsons/biblia/nvi.json';
@@ -116,6 +118,12 @@ function BibleReader({ initialBook, initialChapter }: { initialBook?: number; in
   const [selectedVerses, setSelectedVerses] = useState<number[]>([]);
 
   const bible = BIBLE_DATA[version];
+  // 69 anos: 2 Coríntios 8:11 na versão escolhida (some depois de 31/12/2026).
+  const themeVerse = useMemo(() => {
+    if (!isAnniversaryActive()) return null;
+    const book = bible.find((item) => item.abbrev === THEME_VERSE.bookAbbrev);
+    return book?.chapters[THEME_VERSE.chapterIndex]?.[THEME_VERSE.verseIndex] ?? null;
+  }, [bible]);
   const selectedBook = bible[bookIndex];
   const selectedChapter = selectedBook.chapters[chapterIndex] ?? [];
   const stepIndex = STEPS.findIndex((item) => item.key === step);
@@ -392,6 +400,8 @@ function BibleReader({ initialBook, initialChapter }: { initialBook?: number; in
               />
             )}
 
+            <Anniversary69Banner />
+
             {versionSelector}
 
             <View style={styles.section}>
@@ -413,6 +423,8 @@ function BibleReader({ initialBook, initialChapter }: { initialBook?: number; in
             </View>
           </>
         )}
+
+        {step === 'book' && <Anniversary69Banner />}
 
         {step === 'book' && (
           <View style={styles.bookGrid}>
@@ -457,6 +469,8 @@ function BibleReader({ initialBook, initialChapter }: { initialBook?: number; in
 
         {step === 'reader' && (
           <>
+            {themeVerse ? <ThemeVerseCard text={themeVerse} reference={THEME_VERSE.ref} /> : null}
+
             {versionSelector}
 
             {chapterNav(true)}
@@ -486,16 +500,7 @@ function BibleReader({ initialBook, initialChapter }: { initialBook?: number; in
   );
 }
 
-function buildStyles(theme: {
-  text: string;
-  background: string;
-  backgroundElement: string;
-  backgroundSelected: string;
-  textSecondary: string;
-  cell: string;
-  accent: string;
-  accentLight: string;
-}) {
+function buildStyles(theme: ThemeColors) {
   const accent = theme.accent;
   const accentLight = theme.accentLight;
   const border = theme.backgroundSelected;
@@ -530,15 +535,22 @@ function buildStyles(theme: {
       paddingVertical: Spacing.two,
     },
     kicker: {
-      color: accentLight,
+      color: theme.highlightText,
       fontSize: 12,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
+      letterSpacing: 1.2,
+      alignSelf: 'flex-start',
+      overflow: 'hidden',
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: Radii.pill,
+      backgroundColor: 'rgba(245,184,28,0.16)',
       textTransform: 'uppercase',
     },
     title: {
       color: theme.text,
       fontSize: 34,
-      fontWeight: '800',
+      fontFamily: BrandFonts.displayBlack,
       lineHeight: 40,
     },
     subtitle: {
@@ -553,7 +565,7 @@ function buildStyles(theme: {
       minHeight: 48,
       borderWidth: 1,
       borderColor: border,
-      borderRadius: 8,
+      borderRadius: Radii.pill,
       paddingHorizontal: Spacing.three,
       color: theme.text,
       backgroundColor: theme.backgroundElement,
@@ -568,21 +580,22 @@ function buildStyles(theme: {
     searchResult: {
       borderWidth: 1,
       borderColor: border,
-      borderRadius: 8,
+      borderRadius: Radii.card,
       padding: Spacing.three,
       marginBottom: Spacing.two,
       backgroundColor: theme.backgroundElement,
       gap: Spacing.one,
     },
     searchRef: {
-      color: accentLight,
+      color: theme.chapterNumber,
       fontSize: 13,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
     searchText: {
       color: theme.text,
       fontSize: 14,
-      lineHeight: 21,
+      lineHeight: 22,
+      fontFamily: BrandFonts.reading,
     },
     emptyText: {
       color: theme.textSecondary,
@@ -592,15 +605,17 @@ function buildStyles(theme: {
       gap: Spacing.two,
     },
     sectionLabel: {
-      color: theme.text,
+      color: theme.textSecondary,
       fontSize: 14,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
+      textTransform: 'uppercase',
+      letterSpacing: 1.2,
     },
     segmented: {
       flexDirection: 'row',
       borderWidth: 1,
       borderColor: border,
-      borderRadius: 8,
+      borderRadius: Radii.pill,
       overflow: 'hidden',
       backgroundColor: theme.backgroundElement,
     },
@@ -612,15 +627,16 @@ function buildStyles(theme: {
       paddingHorizontal: Spacing.two,
     },
     segmentButtonActive: {
-      backgroundColor: accentLight,
+      backgroundColor: accent,
+      borderRadius: Radii.pill,
     },
     segmentText: {
       color: theme.textSecondary,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
       fontSize: 13,
     },
     segmentTextActive: {
-      color: '#ffffff',
+      color: theme.onAccent,
     },
     helperText: {
       color: theme.textSecondary,
@@ -635,7 +651,7 @@ function buildStyles(theme: {
       width: '48.5%',
       borderWidth: 1,
       borderColor: border,
-      borderRadius: 10,
+      borderRadius: Radii.card,
       paddingHorizontal: Spacing.three,
       paddingVertical: Spacing.two,
       minHeight: 58,
@@ -645,12 +661,12 @@ function buildStyles(theme: {
     },
     bookButtonActive: {
       backgroundColor: accent,
-      borderColor: accentLight,
+      borderColor: accent,
     },
     bookText: {
       color: theme.text,
       fontSize: 15,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
     bookMeta: {
       color: theme.textSecondary,
@@ -658,7 +674,7 @@ function buildStyles(theme: {
       fontWeight: '600',
     },
     bookTextActive: {
-      color: '#ffffff',
+      color: theme.onAccent,
     },
     secondaryButton: {
       flex: 1,
@@ -666,15 +682,15 @@ function buildStyles(theme: {
       minHeight: 40,
       alignItems: 'center',
       justifyContent: 'center',
-      borderWidth: 1,
-      borderColor: accentLight,
-      borderRadius: 8,
+      borderWidth: 1.5,
+      borderColor: accent,
+      borderRadius: Radii.pill,
       paddingHorizontal: Spacing.three,
     },
     secondaryButtonText: {
-      color: accentLight,
+      color: accent,
       fontSize: 13,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
     chapterGrid: {
       flexDirection: 'row',
@@ -685,7 +701,7 @@ function buildStyles(theme: {
       minWidth: 56,
       minHeight: 56,
       padding: Spacing.two,
-      borderRadius: 8,
+      borderRadius: Radii.chapter,
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 1,
@@ -693,16 +709,16 @@ function buildStyles(theme: {
       backgroundColor: theme.cell,
     },
     chapterButtonActive: {
-      backgroundColor: accentLight,
-      borderColor: accentLight,
+      backgroundColor: accent,
+      borderColor: accent,
     },
     chapterText: {
       color: theme.text,
       fontSize: 16,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
     chapterTextActive: {
-      color: '#ffffff',
+      color: theme.onAccent,
     },
     stepper: {
       flexDirection: 'row',
@@ -716,15 +732,15 @@ function buildStyles(theme: {
       alignItems: 'center',
       justifyContent: 'center',
       gap: 2,
-      borderRadius: 8,
+      borderRadius: Radii.chapter,
       borderWidth: 1,
       borderColor: border,
       backgroundColor: theme.backgroundElement,
       paddingHorizontal: 2,
     },
     stepChipCurrent: {
-      backgroundColor: accentLight,
-      borderColor: accentLight,
+      backgroundColor: accent,
+      borderColor: accent,
     },
     stepChipDone: {
       borderColor: accentLight,
@@ -744,7 +760,7 @@ function buildStyles(theme: {
       fontWeight: '700',
     },
     stepLabelCurrent: {
-      color: '#ffffff',
+      color: theme.onAccent,
     },
     stepLabelDone: {
       color: accentLight,
@@ -758,7 +774,7 @@ function buildStyles(theme: {
     backButtonText: {
       color: accentLight,
       fontSize: 15,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
     optionCard: {
       flexDirection: 'row',
@@ -767,7 +783,7 @@ function buildStyles(theme: {
       minHeight: 84,
       borderWidth: 1,
       borderColor: border,
-      borderRadius: 10,
+      borderRadius: Radii.card,
       padding: Spacing.three,
       backgroundColor: theme.backgroundElement,
     },
@@ -782,7 +798,7 @@ function buildStyles(theme: {
       color: theme.text,
       fontSize: 18,
       lineHeight: 24,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
     optionSubtitle: {
       color: theme.textSecondary,
@@ -790,7 +806,7 @@ function buildStyles(theme: {
       lineHeight: 19,
     },
     optionArrow: {
-      color: accentLight,
+      color: theme.highlightText,
       fontSize: 28,
       lineHeight: 30,
       fontWeight: '300',
@@ -812,26 +828,28 @@ function buildStyles(theme: {
     verseRow: {
       flexDirection: 'row',
       gap: Spacing.two,
-      borderRadius: 8,
+      borderRadius: Radii.chapter,
       paddingVertical: Spacing.two,
       paddingHorizontal: Spacing.two,
     },
     verseRowSelected: {
-      backgroundColor: `${accentLight}22`,
+      // Destaque de versículo: dourado 25% (guia, seção 2.2).
+      backgroundColor: 'rgba(245,184,28,0.25)',
     },
     verseNumber: {
-      color: accentLight,
+      color: theme.verseNumber,
       fontSize: 12,
       lineHeight: 23,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
       minWidth: 22,
       textAlign: 'right',
     },
     verseText: {
       flex: 1,
       color: theme.text,
-      fontSize: 17,
-      lineHeight: 28,
+      fontSize: 18,
+      lineHeight: 30,
+      fontFamily: BrandFonts.reading,
     },
   });
 }

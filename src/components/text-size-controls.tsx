@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useTextSizePreference } from '@/contexts/text-size-preference';
 import { useTheme } from '@/hooks/use-theme';
+import { BrandFonts, Radii } from '@/constants/theme';
 
 export function TextSizeControls() {
   const theme = useTheme();
@@ -44,11 +45,11 @@ export function TextSizeControls() {
 }
 
 const styles = StyleSheet.create({
-  container: { alignSelf: 'stretch', borderWidth: 1, borderRadius: 12, padding: 12, gap: 8 },
+  container: { alignSelf: 'stretch', borderWidth: 1, borderRadius: Radii.card, padding: 12, gap: 8 },
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   label: { fontSize: 16, fontWeight: '600' },
-  button: { minWidth: 56, minHeight: 48, padding: 8, borderWidth: 1, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  buttonText: { fontSize: 22, fontWeight: '800' },
+  button: { minWidth: 56, minHeight: 48, padding: 8, borderWidth: 1, borderRadius: Radii.chapter, alignItems: 'center', justifyContent: 'center' },
+  buttonText: { fontSize: 22, fontFamily: BrandFonts.title },
   reset: { minHeight: 48, paddingHorizontal: 8, justifyContent: 'center' },
   dim: { opacity: 0.4 },
 });

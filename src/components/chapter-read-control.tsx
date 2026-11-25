@@ -4,6 +4,7 @@ import { Text } from '@/components/accessible-text';
 import { useReadingProgress } from '@/contexts/reading-progress';
 import { useTheme } from '@/hooks/use-theme';
 import { chapterKey } from '@/utils/reading-progress';
+import { BrandFonts, Radii } from '@/constants/theme';
 
 export function ChapterReadControl({ bookId, chapter }: { bookId: string; chapter: number }) {
   const theme = useTheme();
@@ -19,7 +20,7 @@ export function ChapterReadControl({ bookId, chapter }: { bookId: string; chapte
         disabled={!ready}
         onPress={() => setRead(bookId, chapter, !read)}
         style={({ pressed }) => [styles.button, { backgroundColor: read ? theme.accent : theme.backgroundElement, borderColor: theme.accentLight, opacity: !ready || pressed ? 0.6 : 1 }]}>
-        <Text style={[styles.label, { color: read ? '#ffffff' : theme.text }]}>
+        <Text style={[styles.label, { color: read ? theme.onAccent : theme.text }]}>
           {read ? '✓ Capítulo lido · Desfazer' : 'Marcar capítulo como lido'}
         </Text>
       </Pressable>
@@ -38,6 +39,6 @@ export function ChapterReadControl({ bookId, chapter }: { bookId: string; chapte
 
 const styles = StyleSheet.create({
   group: { gap: 8 },
-  button: { minHeight: 48, borderWidth: 1, borderColor: 'transparent', borderRadius: 10, padding: 12, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  button: { minHeight: 48, borderWidth: 1, borderColor: 'transparent', borderRadius: Radii.pill, padding: 12, alignItems: 'center', justifyContent: 'center' },
+  label: { fontSize: 16, fontFamily: BrandFonts.title, textAlign: 'center' },
 });

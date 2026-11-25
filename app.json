@@ -4,7 +4,7 @@
     "slug": "biblia-sibb-offline",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/sibb-icon.png",
+    "icon": "./assets/images/icon-69/icon.png",
     "scheme": "bibliasibboffline",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -16,7 +16,11 @@
       "permissions": [
         "com.google.android.gms.permission.AD_ID"
       ],
-      "icon": "./assets/images/sibb-icon.png",
+      "icon": "./assets/images/icon-69/icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon-69/adaptive-foreground.png",
+        "backgroundImage": "./assets/images/icon-69/adaptive-background.png"
+      },
       "predictiveBackGestureEnabled": false
     },
     "web": {

@@ -15,7 +15,7 @@ import { Text, TextInput } from '@/components/accessible-text';
 import { TextSizeControls } from '@/components/text-size-controls';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { SHARE_FOOTER } from '@/constants/share';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Radii, Palette, BrandFonts, BottomTabInset, MaxContentWidth, Spacing, type ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import hymnsData from '../../assets/jsons/cantor_cristao/cantor_cristao.json';
 
@@ -39,6 +39,20 @@ function toTitleCase(value: string) {
       return `${word.charAt(0).toUpperCase()}${word.slice(1)}`;
     })
     .join(' ');
+}
+
+// Separa a letra em estrofes e marca o coro ("[coro]" no JSON) para exibir
+// em itálico com barra dourada. Só visual: o texto compartilhado não muda.
+function splitStanzas(lyrics: string) {
+  return lyrics
+    .trim()
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => {
+      const chorus = /^\[coro\]/i.test(block);
+      return { chorus, text: chorus ? block.replace(/^\[coro\]\s*/i, '') : block };
+    });
 }
 
 export default function HymnalScreen() {
@@ -146,9 +160,15 @@ export default function HymnalScreen() {
                     </Pressable>
                   </View>
 
-                  <Text style={styles.lyricsText}>
-                    {selectedHymn.lyrics.trim()}
-                  </Text>
+                  <View style={styles.stanzas}>
+                    {splitStanzas(selectedHymn.lyrics).map((stanza, index) => (
+                      <View key={index} style={stanza.chorus ? styles.chorus : undefined}>
+                        <Text style={[styles.lyricsText, stanza.chorus && styles.chorusText]}>
+                          {stanza.text}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
                 </ScrollView>
               </View>
             )}
@@ -165,18 +185,8 @@ export default function HymnalScreen() {
   );
 }
 
-function buildStyles(theme: {
-  text: string;
-  background: string;
-  backgroundElement: string;
-  backgroundSelected: string;
-  textSecondary: string;
-  cell: string;
-  accent: string;
-  accentLight: string;
-}) {
+function buildStyles(theme: ThemeColors) {
   const accent = theme.accent;
-  const accentLight = theme.accentLight;
   const border = theme.backgroundSelected;
 
   return StyleSheet.create({
@@ -201,15 +211,22 @@ function buildStyles(theme: {
       paddingBottom: Spacing.three,
     },
     kicker: {
-      color: accentLight,
+      color: theme.highlightText,
       fontSize: 12,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
+      letterSpacing: 1.2,
+      alignSelf: 'flex-start',
+      overflow: 'hidden',
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: Radii.pill,
+      backgroundColor: 'rgba(245,184,28,0.16)',
       textTransform: 'uppercase',
     },
     title: {
       color: theme.text,
       fontSize: 34,
-      fontWeight: '800',
+      fontFamily: BrandFonts.displayBlack,
       lineHeight: 40,
     },
     subtitle: {
@@ -224,13 +241,13 @@ function buildStyles(theme: {
     sectionLabel: {
       color: theme.text,
       fontSize: 14,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
     input: {
       minHeight: 48,
       borderWidth: 1,
       borderColor: border,
-      borderRadius: 8,
+      borderRadius: Radii.pill,
       paddingHorizontal: Spacing.three,
       color: theme.text,
       backgroundColor: theme.backgroundElement,
@@ -248,7 +265,7 @@ function buildStyles(theme: {
       gap: Spacing.three,
       borderWidth: 1,
       borderColor: border,
-      borderRadius: 8,
+      borderRadius: Radii.card,
       paddingHorizontal: Spacing.three,
       marginBottom: Spacing.two,
       backgroundColor: theme.backgroundElement,
@@ -257,22 +274,22 @@ function buildStyles(theme: {
       minWidth: 42,
       minHeight: 42,
       padding: Spacing.one,
-      borderRadius: 8,
+      borderRadius: Radii.pill,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: accent,
     },
     hymnNumberText: {
-      color: '#ffffff',
+      color: theme.onAccent,
       fontSize: 14,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
     hymnTitle: {
       flex: 1,
       color: theme.text,
       fontSize: 16,
       lineHeight: 22,
-      fontWeight: '700',
+      fontFamily: BrandFonts.title,
     },
     chevron: {
       color: theme.textSecondary,
@@ -287,7 +304,7 @@ function buildStyles(theme: {
     emptyTitle: {
       color: theme.text,
       fontSize: 18,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
     emptyText: {
       color: theme.textSecondary,
@@ -330,30 +347,30 @@ function buildStyles(theme: {
     },
     modalNumber: {
       minWidth: 44,
-      color: accentLight,
+      color: theme.chapterNumber,
       fontSize: 26,
       lineHeight: 32,
-      fontWeight: '900',
+      fontFamily: BrandFonts.displayBlack,
     },
     modalTitle: {
       flex: 1,
       color: theme.text,
       fontSize: 20,
       lineHeight: 26,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
     closeButton: {
       minHeight: 40,
       justifyContent: 'center',
       borderWidth: 1,
       borderColor: border,
-      borderRadius: 8,
+      borderRadius: Radii.pill,
       paddingHorizontal: Spacing.three,
     },
     closeButtonText: {
       color: theme.text,
       fontSize: 13,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
     controls: {
       alignItems: 'stretch',
@@ -364,14 +381,14 @@ function buildStyles(theme: {
       marginLeft: 'auto',
       minHeight: 40,
       justifyContent: 'center',
-      borderRadius: 8,
+      borderRadius: Radii.pill,
       paddingHorizontal: Spacing.three,
       backgroundColor: accent,
     },
     shareButtonText: {
-      color: '#ffffff',
+      color: theme.onAccent,
       fontSize: 13,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
     lyricsScroll: {
       flex: 1,
@@ -379,10 +396,22 @@ function buildStyles(theme: {
     lyricsContent: {
       paddingBottom: Spacing.six,
     },
+    stanzas: {
+      gap: Spacing.three,
+    },
+    chorus: {
+      borderLeftWidth: 3,
+      borderLeftColor: Palette.gold500,
+      paddingLeft: Spacing.three,
+    },
+    chorusText: {
+      fontFamily: BrandFonts.readingItalic,
+    },
     lyricsText: {
       color: theme.text,
-      fontSize: 17,
-      lineHeight: 28,
+      fontSize: 18,
+      lineHeight: 30,
+      fontFamily: BrandFonts.reading,
     },
   });
 }
