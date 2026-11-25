@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "com.bibliasibb",
-      "versionCode": 19,
+      "versionCode": 21,
       "permissions": [
         "com.google.android.gms.permission.AD_ID"
       ],
