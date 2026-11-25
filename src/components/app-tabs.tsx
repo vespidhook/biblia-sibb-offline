@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppBannerAd } from '@/components/banner-ad';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { BrandFonts, MaxContentWidth, Radii, Spacing, type ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type NavItem = {
@@ -54,16 +54,7 @@ export default function AppTabs() {
 }
 
 function buildStyles(
-  theme: {
-    text: string;
-    background: string;
-    backgroundElement: string;
-    backgroundSelected: string;
-    textSecondary: string;
-    cell: string;
-    accent: string;
-    accentLight: string;
-  },
+  theme: ThemeColors,
   bottomInset: number,
 ) {
   return StyleSheet.create({
@@ -84,36 +75,37 @@ function buildStyles(
       borderTopWidth: 1,
       borderTopColor: theme.backgroundSelected,
     },
+    // Barra navy nos dois temas (guia, seção 4). O banner fica acima, sobre
+    // o fundo do tema, na mesma posição e tamanho de antes.
     navBar: {
       width: '100%',
       maxWidth: MaxContentWidth,
       flexDirection: 'row',
-      gap: Spacing.two,
+      gap: Spacing.one,
+      padding: Spacing.one,
+      borderRadius: Radii.card,
+      backgroundColor: theme.navBackground,
     },
     navButton: {
       flex: 1,
       minHeight: 54,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: theme.backgroundSelected,
-      backgroundColor: theme.backgroundElement,
+      borderRadius: Radii.pill,
       alignItems: 'center',
       justifyContent: 'center',
       gap: Spacing.half,
     },
     navButtonPressed: {
-      opacity: 0.8,
-      backgroundColor: theme.cell,
+      backgroundColor: 'rgba(245,184,28,0.16)',
     },
     navIcon: {
       fontSize: 20,
       lineHeight: 24,
     },
     navLabel: {
-      color: theme.accentLight,
+      color: theme.navInactive,
       fontSize: 12,
       lineHeight: 16,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
   });
 }
