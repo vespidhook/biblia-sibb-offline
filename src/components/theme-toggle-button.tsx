@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { Spacing } from '@/constants/theme';
+import { Palette, Spacing } from '@/constants/theme';
 import { useThemePreference } from '@/contexts/theme-preference';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0f172a',
+    shadowColor: Palette.navy900,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 6,

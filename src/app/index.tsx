@@ -15,7 +15,7 @@ import { AppBannerAd } from '@/components/banner-ad';
 import { Text } from '@/components/accessible-text';
 import { TextSizeControls } from '@/components/text-size-controls';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Palette, Spacing } from '@/constants/theme';
 import { useAdsConsent } from '@/contexts/ads-consent';
 import { useThemePreference } from '@/contexts/theme-preference';
 import { useTheme } from '@/hooks/use-theme';
@@ -164,7 +164,7 @@ function buildStyles(theme: {
       marginTop: -40,
       alignItems: 'center',
       gap: Spacing.three,
-      shadowColor: '#0f172a',
+      shadowColor: Palette.navy900,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.08,
       shadowRadius: 12,

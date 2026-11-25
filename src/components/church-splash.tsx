@@ -3,13 +3,15 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, useWindowDimensions } from 'react-native';
 
+import { Palette } from '@/constants/theme';
+
 // Abertura comemorativa dos 69 anos da SIBB (1957–2026).
 // Para voltar à abertura com a foto da fachada, restaure a versão anterior
 // deste arquivo (git log) e a cor do expo-splash-screen no app.json.
 const SPLASH_TALL = require('@/assets/images/splash-69-1440x3120.png');
 const SPLASH_16_9 = require('@/assets/images/splash-69-1080x1920.png');
 
-const BACKGROUND = '#0B1838';
+const BACKGROUND = Palette.navy800;
 
 export function ChurchSplash() {
   const { width, height } = useWindowDimensions();
