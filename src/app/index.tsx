@@ -11,11 +11,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Anniversary69Seal } from '@/components/anniversary-69';
 import { AppBannerAd } from '@/components/banner-ad';
 import { Text } from '@/components/accessible-text';
 import { TextSizeControls } from '@/components/text-size-controls';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { BrandFonts, Gradients, MaxContentWidth, Palette, Radii, Spacing, type ThemeColors } from '@/constants/theme';
+import { isAnniversaryActive } from '@/constants/anniversary';
 import { useAdsConsent } from '@/contexts/ads-consent';
 import { useThemePreference } from '@/contexts/theme-preference';
 import { useTheme } from '@/hooks/use-theme';
@@ -79,6 +81,7 @@ export default function HomeScreen() {
             <Text style={styles.title}>
               BÍBLIA <Text style={styles.titleGold}>SIBB</Text>
             </Text>
+            {isAnniversaryActive() ? <Anniversary69Seal /> : null}
           </View>
 
           <View style={styles.card}>

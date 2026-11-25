@@ -19,6 +19,8 @@ import { TextSizeControls } from '@/components/text-size-controls';
 import { SHARE_FOOTER } from '@/constants/share';
 import { Radii, BrandFonts, BottomTabInset, MaxContentWidth, Spacing, type ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { Anniversary69Banner, ThemeVerseCard } from '@/components/anniversary-69';
+import { THEME_VERSE, isAnniversaryActive } from '@/constants/anniversary';
 import aaBible from '../../assets/jsons/biblia/aa.json';
 import acfBible from '../../assets/jsons/biblia/acf.json';
 import nviBible from '../../assets/jsons/biblia/nvi.json';
@@ -116,6 +118,12 @@ function BibleReader({ initialBook, initialChapter }: { initialBook?: number; in
   const [selectedVerses, setSelectedVerses] = useState<number[]>([]);
 
   const bible = BIBLE_DATA[version];
+  // 69 anos: 2 Coríntios 8:11 na versão escolhida (some depois de 31/12/2026).
+  const themeVerse = useMemo(() => {
+    if (!isAnniversaryActive()) return null;
+    const book = bible.find((item) => item.abbrev === THEME_VERSE.bookAbbrev);
+    return book?.chapters[THEME_VERSE.chapterIndex]?.[THEME_VERSE.verseIndex] ?? null;
+  }, [bible]);
   const selectedBook = bible[bookIndex];
   const selectedChapter = selectedBook.chapters[chapterIndex] ?? [];
   const stepIndex = STEPS.findIndex((item) => item.key === step);
@@ -392,6 +400,8 @@ function BibleReader({ initialBook, initialChapter }: { initialBook?: number; in
               />
             )}
 
+            <Anniversary69Banner />
+
             {versionSelector}
 
             <View style={styles.section}>
@@ -413,6 +423,8 @@ function BibleReader({ initialBook, initialChapter }: { initialBook?: number; in
             </View>
           </>
         )}
+
+        {step === 'book' && <Anniversary69Banner />}
 
         {step === 'book' && (
           <View style={styles.bookGrid}>
@@ -457,6 +469,8 @@ function BibleReader({ initialBook, initialChapter }: { initialBook?: number; in
 
         {step === 'reader' && (
           <>
+            {themeVerse ? <ThemeVerseCard text={themeVerse} reference={THEME_VERSE.ref} /> : null}
+
             {versionSelector}
 
             {chapterNav(true)}
