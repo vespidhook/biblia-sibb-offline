@@ -83,6 +83,8 @@ export const Colors = {
     accent: Palette.navy800,
     // Links e destaques em texto (e alguns fundos com texto branco).
     accentLight: Palette.royal500,
+    // Texto/ícone sobre accent e accentLight.
+    onAccent: Palette.white,
     primary: Palette.navy800,
     onPrimary: Palette.white,
     secondary: Palette.wine700,
@@ -104,10 +106,10 @@ export const Colors = {
     backgroundSelected: Palette.navy700,
     textSecondary: Palette.mutedOnDark,
     cell: Palette.navy700,
-    // royal500 mantém o contraste do texto branco que já existe sobre
-    // accent/accentLight. O dourado entra na Etapa 3 (componentes).
-    accent: Palette.royal500,
-    accentLight: Palette.royal500,
+    // No escuro o destaque é dourado com texto navy por cima (guia, seção 4).
+    accent: Palette.gold500,
+    accentLight: Palette.gold500,
+    onAccent: Palette.navy800,
     primary: Palette.gold500,
     onPrimary: Palette.navy800,
     secondary: Palette.gold500,
@@ -142,6 +144,7 @@ export const Radii = {
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+export type ThemeColors = Record<ThemeColor, string>;
 
 export const Fonts = Platform.select({
   ios: {

@@ -15,7 +15,7 @@ import { AppBannerAd } from '@/components/banner-ad';
 import { Text } from '@/components/accessible-text';
 import { TextSizeControls } from '@/components/text-size-controls';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
-import { MaxContentWidth, Palette, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Palette, Spacing, type ThemeColors } from '@/constants/theme';
 import { useAdsConsent } from '@/contexts/ads-consent';
 import { useThemePreference } from '@/contexts/theme-preference';
 import { useTheme } from '@/hooks/use-theme';
@@ -111,16 +111,7 @@ export default function HomeScreen() {
   );
 }
 
-function buildStyles(theme: {
-  text: string;
-  background: string;
-  backgroundElement: string;
-  backgroundSelected: string;
-  textSecondary: string;
-  cell: string;
-  accent: string;
-  accentLight: string;
-}) {
+function buildStyles(theme: ThemeColors) {
   return StyleSheet.create({
     safeArea: {
       flex: 1,

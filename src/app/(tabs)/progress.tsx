@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/accessible-text';
 import { TextSizeControls } from '@/components/text-size-controls';
-import { BottomTabInset, MaxContentWidth } from '@/constants/theme';
+import { Radii, BrandFonts, BottomTabInset, MaxContentWidth } from '@/constants/theme';
 import { useReadingProgress } from '@/contexts/reading-progress';
 import { useTheme } from '@/hooks/use-theme';
 import { TOTAL_CHAPTERS } from '@/utils/reading-progress';
@@ -84,7 +84,7 @@ export default function ProgressScreen() {
                       accessibilityLabel={`${book.name}, capítulo ${index + 1}, ${read ? 'lido' : 'não lido'}`}
                       onPress={() => openChapter(book.id, index + 1)}
                       style={[styles.chapter, { backgroundColor: read ? theme.accent : theme.cell, borderColor: theme.accentLight }]}>
-                      <Text style={{ color: read ? '#ffffff' : theme.text }}>{index + 1}{read ? ' ✓' : ''}</Text>
+                      <Text style={{ color: read ? theme.onAccent : theme.text }}>{index + 1}{read ? ' ✓' : ''}</Text>
                     </Pressable>
                   ))}
                 </View>
@@ -104,15 +104,15 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', padding: 16, paddingBottom: BottomTabInset + 64, gap: 12 },
   header: { gap: 12 },
-  title: { fontSize: 30, fontWeight: '800' },
+  title: { fontSize: 30, fontFamily: BrandFonts.displayBlack },
   body: { fontSize: 17, lineHeight: 26 },
-  total: { fontSize: 26, fontWeight: '800' },
+  total: { fontSize: 26, fontFamily: BrandFonts.display },
   note: { fontSize: 14, lineHeight: 22, marginBottom: 8 },
-  card: { padding: 16, borderWidth: 1, borderRadius: 12, gap: 12 },
-  bookTitle: { fontSize: 20, fontWeight: '700' },
+  card: { padding: 16, borderWidth: 1, borderRadius: Radii.card, gap: 12 },
+  bookTitle: { fontSize: 20, fontFamily: BrandFonts.title },
   action: { minHeight: 48, justifyContent: 'center', gap: 8, paddingVertical: 8 },
-  track: { height: 12, borderRadius: 6, overflow: 'hidden' },
+  track: { height: 12, borderRadius: Radii.pill, overflow: 'hidden' },
   fill: { height: '100%' },
   chapters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chapter: { minWidth: 56, minHeight: 48, padding: 10, borderWidth: 1, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  chapter: { minWidth: 56, minHeight: 48, padding: 10, borderWidth: 1, borderRadius: Radii.chapter, alignItems: 'center', justifyContent: 'center' },
 });
