@@ -1,8 +1,8 @@
-import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { setStatusBarStyle } from 'expo-status-bar';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Image,
-  ImageBackground,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,7 +15,7 @@ import { AppBannerAd } from '@/components/banner-ad';
 import { Text } from '@/components/accessible-text';
 import { TextSizeControls } from '@/components/text-size-controls';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
-import { MaxContentWidth, Palette, Spacing, type ThemeColors } from '@/constants/theme';
+import { BrandFonts, Gradients, MaxContentWidth, Palette, Radii, Spacing, type ThemeColors } from '@/constants/theme';
 import { useAdsConsent } from '@/contexts/ads-consent';
 import { useThemePreference } from '@/contexts/theme-preference';
 import { useTheme } from '@/hooks/use-theme';
@@ -54,26 +54,35 @@ export default function HomeScreen() {
   const [bannerHeight, setBannerHeight] = useState(0);
   const { privacyOptionsRequired, showPrivacyOptionsForm } = useAdsConsent();
   const styles = useMemo(() => buildStyles(theme), [theme]);
-  const logoSource =
-    mode === 'dark'
-      ? require('@/assets/images/logo-branco.png')
-      : require('@/assets/images/logo-preto.png');
+
+  // O topo desta tela é navy: ícones claros enquanto ela está em foco; ao
+  // sair, volta ao padrão do tema (as outras telas têm fundo do tema).
+  useFocusEffect(
+    useCallback(() => {
+      setStatusBarStyle('light');
+      return () => setStatusBarStyle(mode === 'dark' ? 'light' : 'dark');
+    }, [mode]),
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.body}>
         <ScrollView style={styles.page} contentContainerStyle={styles.pageContent}>
-          <ImageBackground source={require('@/assets/images/frente_igreja.jpg')} style={styles.hero}>
-            <View style={styles.heroOverlay} />
-          </ImageBackground>
+          {/* Topo em gradiente navy com logo branco e "BÍBLIA SIBB" (guia, seção 5) */}
+          <View style={styles.hero}>
+            <Image
+              source={require('@/assets/images/logo-branco.png')}
+              style={styles.logo}
+              resizeMode="contain"
+              accessibilityLabel="SIBB"
+            />
+            <Text style={styles.title}>
+              BÍBLIA <Text style={styles.titleGold}>SIBB</Text>
+            </Text>
+          </View>
 
           <View style={styles.card}>
-            <Image source={logoSource} style={styles.logo} resizeMode="contain" />
-
-            <View style={styles.titleArea}>
-              <Text style={styles.title}>Bíblia SIBB</Text>
-              <Text style={styles.subtitle}>Bíblia e Cantor Cristão disponíveis offline.</Text>
-            </View>
+            <Text style={styles.subtitle}>Bíblia e Cantor Cristão disponíveis offline.</Text>
 
             {privacyOptionsRequired ? (
               <Pressable style={styles.themeToggle} onPress={showPrivacyOptionsForm}>
@@ -87,16 +96,25 @@ export default function HomeScreen() {
               {OPTIONS.map((option) => (
                 <Pressable
                   key={option.route}
-                  style={({ pressed }) => [styles.optionButton, pressed && styles.optionButtonPressed]}
+                  style={({ pressed }) => [
+                    styles.optionButton,
+                    option.route === '/bible' && styles.optionPrimary,
+                    option.route === '/explore' && styles.optionOutline,
+                    pressed && styles.optionButtonPressed,
+                  ]}
                   onPress={() => router.push(option.route)}>
-                  <View style={styles.iconWrap}>
+                  <View style={[styles.iconWrap, option.route === '/bible' && styles.iconWrapPrimary]}>
                     <NativeText style={styles.icon}>{option.icon}</NativeText>
                   </View>
                   <View style={styles.optionTextWrap}>
-                    <Text style={styles.optionTitle}>{option.title}</Text>
-                    <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+                    <Text style={[styles.optionTitle, option.route === '/bible' && styles.onPrimaryText]}>
+                      {option.title}
+                    </Text>
+                    <Text style={[styles.optionSubtitle, option.route === '/bible' && styles.onPrimarySubtle]}>
+                      {option.subtitle}
+                    </Text>
                   </View>
-                  <Text style={styles.arrow}>›</Text>
+                  <Text style={[styles.arrow, option.route === '/bible' && styles.onPrimaryText]}>›</Text>
                 </Pressable>
               ))}
             </View>
@@ -115,7 +133,8 @@ function buildStyles(theme: ThemeColors) {
   return StyleSheet.create({
     safeArea: {
       flex: 1,
-      backgroundColor: theme.background,
+      // Mesma cor do início do gradiente, para a área da status bar.
+      backgroundColor: Gradients.navy[0],
     },
     body: {
       flex: 1,
@@ -136,11 +155,14 @@ function buildStyles(theme: ThemeColors) {
     },
     hero: {
       width: '100%',
-      height: 230,
-    },
-    heroOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(30,58,138,0.34)',
+      minHeight: 260,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.two,
+      paddingTop: Spacing.four,
+      paddingBottom: Spacing.five + Spacing.three,
+      backgroundColor: Palette.navy800,
+      experimental_backgroundImage: `linear-gradient(180deg, ${Gradients.navy.join(', ')})`,
     },
     card: {
       width: '92%',
@@ -148,7 +170,7 @@ function buildStyles(theme: ThemeColors) {
       backgroundColor: theme.backgroundElement,
       borderWidth: 1,
       borderColor: theme.backgroundSelected,
-      borderRadius: 20,
+      borderRadius: Radii.card,
       paddingTop: Spacing.four,
       paddingHorizontal: Spacing.three,
       paddingBottom: Spacing.four,
@@ -162,19 +184,19 @@ function buildStyles(theme: ThemeColors) {
       elevation: 3,
     },
     logo: {
-      width: 200,
-      height: 80,
-    },
-    titleArea: {
-      alignItems: 'center',
-      gap: Spacing.one,
+      width: 180,
+      height: 72,
     },
     title: {
-      color: theme.text,
-      fontSize: 24,
-      fontWeight: '800',
-      lineHeight: 31,
+      color: Palette.white,
+      fontSize: 30,
+      lineHeight: 36,
+      fontFamily: BrandFonts.displayBlack,
+      letterSpacing: 0.5,
       textAlign: 'center',
+    },
+    titleGold: {
+      color: Palette.gold500,
     },
     subtitle: {
       color: theme.textSecondary,
@@ -188,7 +210,7 @@ function buildStyles(theme: ThemeColors) {
       alignItems: 'center',
       justifyContent: 'center',
       gap: Spacing.two,
-      borderRadius: 10,
+      borderRadius: Radii.pill,
       borderWidth: 1,
       borderColor: theme.backgroundSelected,
       backgroundColor: theme.background,
@@ -205,7 +227,7 @@ function buildStyles(theme: ThemeColors) {
       color: theme.text,
       fontSize: 13,
       lineHeight: 18,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
     options: {
       width: '100%',
@@ -218,9 +240,28 @@ function buildStyles(theme: ThemeColors) {
       gap: Spacing.two,
       borderWidth: 1,
       borderColor: theme.backgroundSelected,
-      borderRadius: 10,
+      borderRadius: Radii.card,
       padding: Spacing.three,
       backgroundColor: theme.background,
+    },
+    // "Bíblia" em destaque dourado; "Cantor Cristão" com contorno (guia, seção 5)
+    optionPrimary: {
+      backgroundColor: Palette.gold500,
+      borderColor: Palette.gold500,
+    },
+    optionOutline: {
+      borderWidth: 1.5,
+      borderColor: theme.accent,
+    },
+    iconWrapPrimary: {
+      backgroundColor: 'rgba(11,24,56,0.12)',
+      borderColor: 'rgba(11,24,56,0.2)',
+    },
+    onPrimaryText: {
+      color: Palette.navy800,
+    },
+    onPrimarySubtle: {
+      color: Palette.navy700,
     },
     optionButtonPressed: {
       opacity: 0.78,
@@ -229,7 +270,7 @@ function buildStyles(theme: ThemeColors) {
     iconWrap: {
       width: 52,
       height: 52,
-      borderRadius: 10,
+      borderRadius: Radii.chapter,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: `${theme.accentLight}18`,
@@ -248,7 +289,7 @@ function buildStyles(theme: ThemeColors) {
       color: theme.text,
       fontSize: 17,
       lineHeight: 23,
-      fontWeight: '800',
+      fontFamily: BrandFonts.title,
     },
     optionSubtitle: {
       color: theme.textSecondary,
