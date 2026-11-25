@@ -28,7 +28,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#1e3a8a",
+          "backgroundColor": "#0B1838",
           "image": "./assets/images/logo-branco.png",
           "imageWidth": 280,
           "resizeMode": "contain"

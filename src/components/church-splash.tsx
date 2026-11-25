@@ -1,26 +1,32 @@
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Animated, StyleSheet, useWindowDimensions } from 'react-native';
+
+// Abertura comemorativa dos 69 anos da SIBB (1957–2026).
+// Para voltar à abertura com a foto da fachada, restaure a versão anterior
+// deste arquivo (git log) e a cor do expo-splash-screen no app.json.
+const SPLASH_TALL = require('@/assets/images/splash-69-1440x3120.png');
+const SPLASH_16_9 = require('@/assets/images/splash-69-1080x1920.png');
+
+const BACKGROUND = '#0B1838';
 
 export function ChurchSplash() {
-  const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
   const [opacity] = useState(() => new Animated.Value(1));
-  const [photoReady, setPhotoReady] = useState(false);
-  const [logoReady, setLogoReady] = useState(false);
+  const [ready, setReady] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const [visible, setVisible] = useState(true);
 
   // A failed asset must never leave the native splash covering the app.
   useEffect(() => {
-    if (photoReady && logoReady) return;
+    if (ready) return;
     const timeout = setTimeout(() => setTimedOut(true), 3000);
     return () => clearTimeout(timeout);
-  }, [photoReady, logoReady]);
+  }, [ready]);
 
   useEffect(() => {
-    if ((!photoReady || !logoReady) && !timedOut) return;
+    if (!ready && !timedOut) return;
 
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -29,13 +35,13 @@ export function ChurchSplash() {
       timer = setTimeout(() => {
         Animated.timing(opacity, {
           toValue: 0,
-          duration: 350,
+          duration: 400,
           useNativeDriver: true,
           isInteraction: false,
         }).start(({ finished }) => {
           if (finished && !cancelled) setVisible(false);
         });
-      }, timedOut ? 0 : 900);
+      }, timedOut && !ready ? 0 : 1600);
     });
 
     return () => {
@@ -43,31 +49,26 @@ export function ChurchSplash() {
       clearTimeout(timer);
       opacity.stopAnimation();
     };
-  }, [logoReady, opacity, photoReady, timedOut]);
+  }, [opacity, ready, timedOut]);
 
   if (!visible) return null;
 
+  const ratio = height / Math.max(width, 1);
+  // Celulares atuais (~19.5:9) usam a arte alta; 16:9 usa a outra.
+  // Tablets / paisagem mostram a arte inteira, sem cortar textos.
+  const source = ratio >= 1.9 ? SPLASH_TALL : SPLASH_16_9;
+  const contentFit = ratio >= 1.5 ? 'cover' : 'contain';
+
   return (
-    <Animated.View style={[styles.overlay, { opacity }]} accessibilityLabel="Bíblia SIBB">
+    <Animated.View style={[styles.overlay, { opacity }]} accessibilityLabel="Bíblia SIBB — 69 anos">
       <Image
-        source={require('@/assets/images/sibb-splash-fachada.png')}
+        source={source}
         style={StyleSheet.absoluteFill}
-        contentFit="cover"
+        contentFit={contentFit}
         transition={0}
-        onDisplay={() => setPhotoReady(true)}
-        onError={() => setPhotoReady(true)}
+        onDisplay={() => setReady(true)}
+        onError={() => setReady(true)}
       />
-      <View style={[styles.brand, { bottom: Math.max(insets.bottom, 24) + 32 }]}>
-        <Image
-          source={require('@/assets/images/logo-branco.png')}
-          style={styles.logo}
-          contentFit="contain"
-          transition={0}
-          onDisplay={() => setLogoReady(true)}
-          onError={() => setLogoReady(true)}
-          accessibilityLabel="Segunda Igreja Batista em Bom Sucesso"
-        />
-      </View>
     </Animated.View>
   );
 }
@@ -75,19 +76,8 @@ export function ChurchSplash() {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#1e3a8a',
+    backgroundColor: BACKGROUND,
     zIndex: 1000,
     elevation: 1000,
-  },
-  brand: {
-    position: 'absolute',
-    left: 24,
-    right: 24,
-    alignItems: 'center',
-  },
-  logo: {
-    width: '100%',
-    maxWidth: 300,
-    aspectRatio: 517 / 210,
   },
 });
